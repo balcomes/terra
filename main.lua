@@ -115,8 +115,9 @@ function love.load()
                 c2 = math.random(),
                 c3 = math.random(),
                 conc = c,
+                blink = false,
             }
-            setmetatable(this, Player)
+            setmetatable(this, Stone)
             return this
         end
 
@@ -124,6 +125,13 @@ function love.load()
         function Stone:Animate()
             love.graphics.setColor(self.c1, self.c2, self.c3)
             drawCell(self.x, self.y)
+        end
+
+        -- Blink
+        function Stone:Blink()
+            self.c1 = self.c2
+            self.c2 = self.c3
+            self.c3 = self.c1
         end
 
 --------------------------------------------------------------------------------
@@ -134,7 +142,11 @@ function love.load()
     for i = 1,100 do
         table.insert(pile, Stone:Create(1))
     end
-
+    for k,v in  pairs(pile) do
+        if math.random() < 0.2 then
+            v.blink = true
+        end
+    end
 end
 
 --------------------------------------------------------------------------------
@@ -150,6 +162,9 @@ function love.update(dt)
             board:Clear()
             for k,v in pairs(pile) do
                 board.grid[v.y][v.x] = 1
+                if v.blink == true then
+                    v:Blink()
+                end
             end
 
             -- Player Movement
@@ -205,12 +220,16 @@ function love.update(dt)
             for k,v in pairs(pile) do
                 for k2,v2 in pairs(pile) do
                     if math.abs(v.x - v2.x) < 2 and math.abs(v.y - v2.y) < 2 then
-                        v.c1 = (v.c1*v.conc + v2.c1*v2.conc)/(v.conc + v2.conc)
-                        v.c2 = (v.c2*v.conc + v2.c2*v2.conc)/(v.conc + v2.conc)
-                        v.c3 = (v.c3*v.conc + v2.c3*v2.conc)/(v.conc + v2.conc)
-                        v2.c1 = (v.c1*v.conc + v2.c1*v2.conc)/(v.conc + v2.conc)
-                        v2.c2 = (v.c2*v.conc + v2.c2*v2.conc)/(v.conc + v2.conc)
-                        v2.c3 = (v.c3*v.conc + v2.c3*v2.conc)/(v.conc + v2.conc)
+                        if v.blink == false then
+                            v.c1 = (v.c1*v.conc + v2.c1*v2.conc)/(v.conc + v2.conc)
+                            v.c2 = (v.c2*v.conc + v2.c2*v2.conc)/(v.conc + v2.conc)
+                            v.c3 = (v.c3*v.conc + v2.c3*v2.conc)/(v.conc + v2.conc)
+                        end
+                        if v2.blink == false then
+                            v2.c1 = (v.c1*v.conc + v2.c1*v2.conc)/(v.conc + v2.conc)
+                            v2.c2 = (v.c2*v.conc + v2.c2*v2.conc)/(v.conc + v2.conc)
+                            v2.c3 = (v.c3*v.conc + v2.c3*v2.conc)/(v.conc + v2.conc)
+                        end
                     end
                 end
             end
