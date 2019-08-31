@@ -127,23 +127,58 @@ function love.load()
         end
     end
 
-    -- Grid Background
+    -- Ground Fill
     function Ground:Animate()
-        for y = 10, gridYCount - 10 do
-            for x = 10, gridXCount -10 do
-                self.grid[y][x] = 1
-                local cellDrawSize = cellSize - 1
-                love.graphics.setColor(135/255, 140/255, 45/255)
-                love.graphics.rectangle(
-                    'fill',
-                    (x - 1) * cellSize,
-                    (y - 1) * cellSize,
-                    cellDrawSize,
-                    cellDrawSize
-                )
+        for y = 1, gridYCount do
+            for x = 1, gridXCount do
+                if self.grid[y][x] == 1 then
+                    local cellDrawSize = cellSize - 1
+                    love.graphics.setColor(135/255, 140/255, 45/255)
+                    love.graphics.rectangle(
+                        'fill',
+                        (x - 1) * cellSize,
+                        (y - 1) * cellSize,
+                        cellDrawSize,
+                        cellDrawSize
+                    )
+                end
             end
         end
     end
+
+    -- Ground Fill
+    function Ground:Fill()
+        for y = 10, gridYCount - 10 do
+            for x = 10, gridXCount -10 do
+                self.grid[y][x] = 1
+            end
+        end
+    end
+
+    -- Ground Erode
+    function Ground:Erode()
+        for y = 1, gridYCount do
+            for x = 1, gridXCount do
+                if self.grid[y][x] == 1 then
+
+                    chance = self.grid[y-1][x-1] +
+                    self.grid[y-1][x] +
+                    self.grid[y-1][x+1] +
+                    self.grid[y][x-1] +
+                    self.grid[y][x] +
+                    self.grid[y][x+1] +
+                    self.grid[y+1][x-1] +
+                    self.grid[y+1][x] +
+                    self.grid[y+1][x+1]
+
+                    if math.random()*math.random()*math.random() > chance/9 then
+                        self.grid[y][x] = 0
+                    end
+                end
+            end
+        end
+    end
+
 --------------------------------------------------------------------------------
 
     -- Stone Class
@@ -184,6 +219,7 @@ function love.load()
     board:Clear()
     floor = Ground:Create()
     floor:Clear()
+    floor:Fill()
     player = Player:Create()
     for i = 1,100 do
         table.insert(pile, Stone:Create(1))
@@ -212,6 +248,8 @@ function love.update(dt)
                     v:Blink()
                 end
             end
+
+            floor:Erode()
 
             -- Player Movement
             if love.keyboard.isDown( "up" )
