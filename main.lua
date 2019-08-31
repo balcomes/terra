@@ -30,6 +30,8 @@ function love.load()
     end
 
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
     -- Player Class
     Player = {}
@@ -88,7 +90,7 @@ function love.load()
         for y = 1, gridYCount do
             for x = 1, gridXCount do
                 local cellDrawSize = cellSize - 1
-                love.graphics.setColor(35/255, 40/255, 45/255)
+                love.graphics.setColor(35/255, 40/255, 145/255)
                 love.graphics.rectangle(
                     'fill',
                     (x - 1) * cellSize,
@@ -131,9 +133,14 @@ function love.load()
     function Ground:Animate()
         for y = 1, gridYCount do
             for x = 1, gridXCount do
-                if self.grid[y][x] == 1 then
+                if self.grid[y][x] == 1 or self.grid[y][x] == 2 then
                     local cellDrawSize = cellSize - 1
-                    love.graphics.setColor(135/255, 140/255, 45/255)
+                    if self.grid[y][x] == 1 then
+                        love.graphics.setColor(135/255, 140/255, 45/255)
+                    end
+                    if self.grid[y][x] == 2 then
+                        love.graphics.setColor(235/255, 240/255, 245/255)
+                    end
                     love.graphics.rectangle(
                         'fill',
                         (x - 1) * cellSize,
@@ -172,6 +179,23 @@ function love.load()
                     self.grid[y+1][x+1]
 
                     if math.random()*math.random()*math.random() > chance/9 then
+                        self.grid[y][x] = 2
+                    end
+                end
+
+                if self.grid[y][x] == 2 then
+
+                    chance = self.grid[y-1][x-1] +
+                    self.grid[y-1][x] +
+                    self.grid[y-1][x+1] +
+                    self.grid[y][x-1] +
+                    self.grid[y][x] +
+                    self.grid[y][x+1] +
+                    self.grid[y+1][x-1] +
+                    self.grid[y+1][x] +
+                    self.grid[y+1][x+1]
+
+                    if math.random()*math.random()*math.random() > chance/9 then
                         self.grid[y][x] = 0
                     end
                 end
@@ -188,8 +212,8 @@ function love.load()
 
         local this =
         {
-            x = math.random(1, gridXCount),
-            y = math.random(1, gridYCount),
+            x = math.random(10, gridXCount - 10),
+            y = math.random(10, gridYCount - 10),
             c1 = math.random(),
             c2 = math.random(),
             c3 = math.random(),
@@ -214,6 +238,8 @@ function love.load()
     end
 
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
     board = Board:Create()
     board:Clear()
@@ -221,7 +247,7 @@ function love.load()
     floor:Clear()
     floor:Fill()
     player = Player:Create()
-    for i = 1,100 do
+    for i = 1,10 do
         table.insert(pile, Stone:Create(1))
     end
     for k,v in  pairs(pile) do
@@ -231,6 +257,8 @@ function love.load()
     end
 end
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 function love.update(dt)
@@ -254,25 +282,25 @@ function love.update(dt)
             -- Player Movement
             if love.keyboard.isDown( "up" )
             and player.y > 2
-            and floor.grid[player.y - 1][player.x] == 1
+            and floor.grid[player.y - 1][player.x] ~= 0
             and board.grid[player.y - 1][player.x] + board.grid[player.y - 2][player.x] ~= 2 then
                 player.y = player.y - 1
             end
             if love.keyboard.isDown( "down" )
             and player.y < gridYCount - 1
-            and floor.grid[player.y + 1][player.x] == 1
+            and floor.grid[player.y + 1][player.x] ~= 0
             and board.grid[player.y + 1][player.x] + board.grid[player.y + 2][player.x] ~= 2 then
                 player.y = player.y + 1
             end
             if love.keyboard.isDown( "left" )
             and player.x > 2
-            and floor.grid[player.y][player.x - 1] == 1
+            and floor.grid[player.y][player.x - 1] ~= 0
             and board.grid[player.y][player.x - 1] + board.grid[player.y][player.x - 2] ~= 2 then
                 player.x = player.x - 1
             end
             if love.keyboard.isDown( "right" )
             and player.x < gridXCount - 1
-            and floor.grid[player.y][player.x + 1] == 1
+            and floor.grid[player.y][player.x + 1] ~= 0
             and board.grid[player.y][player.x + 1] + board.grid[player.y][player.x + 2] ~= 2 then
                 player.x = player.x + 1
             end
@@ -375,6 +403,8 @@ function love.update(dt)
     end
 end
 
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 function love.draw()
