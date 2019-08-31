@@ -54,7 +54,7 @@ function love.load()
     -- Draw Player
     function Player:Animate()
         love.graphics.setColor(self.c1, self.c2, self.c3)
-        drawCell(self.x,self.y)
+        drawCell(self.x, self.y)
     end
 
 --------------------------------------------------------------------------------
@@ -122,14 +122,14 @@ function love.update(dt)
         end
 
     elseif timer >= 2 then
-        
+
     end
 end
 
 function love.draw()
 
-    board.Animate()
-    player.Animate()
+    board:Animate()
+    player:Animate()
 
 end
 
@@ -140,9 +140,9 @@ function love.keypressed(key)
     elseif key == 'left' then
         player.x = player.x - 1
     elseif key == 'up' then
-        player.y = player.y + 1
-    elseif key == 'down' then
         player.y = player.y - 1
+    elseif key == 'down' then
+        player.y = player.y + 1
     elseif key == 'q' then
         timerLimit = timerLimit + 0.005
     elseif key == 'w' then
