@@ -3,6 +3,7 @@ function love.load()
     cellSize = 12
     timer = 0
     timerLimit = 0.1
+    pile = {}
 
     gridXCount = math.floor(love.graphics.getWidth()/cellSize + 0.5)
     gridYCount = math.floor(love.graphics.getHeight()/cellSize + 0.5)
@@ -28,6 +29,8 @@ function love.load()
         )
     end
 
+--------------------------------------------------------------------------------
+
     -- Player Class
     Player = {}
     Player.__index = Player
@@ -38,7 +41,7 @@ function love.load()
             y = math.floor(gridYCount/2),
             c1 = 0,
             c2 = 0,
-            c3 = 1,
+            c3 = 0,
             name = RandomVariable(9),
             alive = true,
             directionQueue = {'right'},
@@ -103,13 +106,14 @@ function love.load()
         Stone = {}
         Stone.__index = Stone
         function Stone:Create()
+
             local this =
             {
-                x = math.floor(gridXCount/3),
-                y = math.floor(gridYCount/3),
-                c1 = 0,
-                c2 = 1,
-                c3 = 1,
+                x = math.random(1, gridXCount),
+                y = math.random(1, gridYCount),
+                c1 = math.random(),
+                c2 = math.random(),
+                c3 = math.random(),
             }
             setmetatable(this, Player)
             return this
@@ -126,7 +130,10 @@ function love.load()
     board = Board:Create()
     board:Clear()
     player = Player:Create()
-    stone = Stone:Create()
+    for i = 1,100 do
+        table.insert(pile, Stone:Create())
+    end
+
 end
 
 function love.update(dt)
@@ -137,36 +144,74 @@ function love.update(dt)
             -- Handle Game Speed
             timer = timer - timerLimit
 
+            board:Clear()
+            for k,v in pairs(pile) do
+                board.grid[v.y][v.x] = 1
+            end
+
             -- Player Movement
-            if love.keyboard.isDown( "up" ) then
+            if love.keyboard.isDown( "up" )
+            and player.y > 2
+            and board.grid[player.y - 1][player.x] + board.grid[player.y - 2][player.x] ~= 2 then
                 player.y = player.y - 1
             end
-            if love.keyboard.isDown( "down" ) then
+            if love.keyboard.isDown( "down" )
+            and player.y < gridYCount - 1
+            and board.grid[player.y + 1][player.x] + board.grid[player.y + 2][player.x] ~= 2 then
                 player.y = player.y + 1
             end
-            if love.keyboard.isDown( "left" ) then
+            if love.keyboard.isDown( "left" )
+            and player.x > 2
+            and board.grid[player.y][player.x - 1] + board.grid[player.y][player.x - 2] ~= 2 then
                 player.x = player.x - 1
             end
-            if love.keyboard.isDown( "right" ) then
+            if love.keyboard.isDown( "right" )
+            and player.x < gridXCount - 1
+            and board.grid[player.y][player.x + 1] + board.grid[player.y][player.x + 2] ~= 2 then
                 player.x = player.x + 1
             end
 
             -- Push Stone
-            if stone.x == player.x
-            and stone.y == player.y then
-                if love.keyboard.isDown( "up" ) then
-                    stone.y = stone.y - 1
-                end
-                if love.keyboard.isDown( "down" ) then
-                    stone.y = stone.y + 1
-                end
-                if love.keyboard.isDown( "left" ) then
-                    stone.x = stone.x - 1
-                end
-                if love.keyboard.isDown( "right" ) then
-                    stone.x = stone.x + 1
+            for k,stone in pairs(pile) do
+                if stone.x == player.x
+                and stone.y == player.y then
+                    if love.keyboard.isDown( "up" )
+                    and stone.y > 3
+                    and board.grid[stone.y - 1][stone.x] ~= 1 then
+                        stone.y = stone.y - 1
+                    end
+                    if love.keyboard.isDown( "down" )
+                    and stone.y < gridYCount - 2
+                    and board.grid[stone.y + 1][stone.x] ~= 1 then
+                        stone.y = stone.y + 1
+                    end
+                    if love.keyboard.isDown( "left" )
+                    and stone.x > 3
+                    and board.grid[stone.y][stone.x - 1] ~= 1 then
+                        stone.x = stone.x - 1
+                    end
+                    if love.keyboard.isDown( "right" )
+                    and stone.x < gridXCount - 2
+                    and board.grid[stone.y][stone.x + 1] ~= 1 then
+                        stone.x = stone.x + 1
+                    end
                 end
             end
+
+            for k,v in pairs(pile) do
+                for k2,v2 in pairs(pile) do
+                    if math.abs(v.x - v2.x) < 2 and math.abs(v.y - v2.y) < 2 then
+                        v.c1 = (v.c1 + v2.c1)/2
+                        v.c2 = (v.c2 + v2.c2)/2
+                        v.c3 = (v.c3 + v2.c3)/2
+                        v2.c1 = (v.c1 + v2.c1)/2
+                        v2.c2 = (v.c2 + v2.c2)/2
+                        v2.c3 = (v.c3 + v2.c3)/2
+                    end
+                end
+            end
+
+
         end
     elseif timer >= 2 then
     end
@@ -175,7 +220,9 @@ end
 function love.draw()
     board:Animate()
     player:Animate()
-    stone:Animate()
+    for k,v in pairs(pile) do
+        v:Animate()
+    end
 end
 
 -- Menu Controls
