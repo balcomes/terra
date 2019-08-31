@@ -105,7 +105,7 @@ function love.load()
         -- Stone Class
         Stone = {}
         Stone.__index = Stone
-        function Stone:Create()
+        function Stone:Create(c)
 
             local this =
             {
@@ -114,6 +114,7 @@ function love.load()
                 c1 = math.random(),
                 c2 = math.random(),
                 c3 = math.random(),
+                conc = c,
             }
             setmetatable(this, Player)
             return this
@@ -131,10 +132,12 @@ function love.load()
     board:Clear()
     player = Player:Create()
     for i = 1,100 do
-        table.insert(pile, Stone:Create())
+        table.insert(pile, Stone:Create(1))
     end
 
 end
+
+--------------------------------------------------------------------------------
 
 function love.update(dt)
     timer = timer + dt
@@ -198,24 +201,74 @@ function love.update(dt)
                 end
             end
 
+            -- Color Mix
             for k,v in pairs(pile) do
                 for k2,v2 in pairs(pile) do
                     if math.abs(v.x - v2.x) < 2 and math.abs(v.y - v2.y) < 2 then
-                        v.c1 = (v.c1 + v2.c1)/2
-                        v.c2 = (v.c2 + v2.c2)/2
-                        v.c3 = (v.c3 + v2.c3)/2
-                        v2.c1 = (v.c1 + v2.c1)/2
-                        v2.c2 = (v.c2 + v2.c2)/2
-                        v2.c3 = (v.c3 + v2.c3)/2
+                        v.c1 = (v.c1*v.conc + v2.c1*v2.conc)/(v.conc + v2.conc)
+                        v.c2 = (v.c2*v.conc + v2.c2*v2.conc)/(v.conc + v2.conc)
+                        v.c3 = (v.c3*v.conc + v2.c3*v2.conc)/(v.conc + v2.conc)
+                        v2.c1 = (v.c1*v.conc + v2.c1*v2.conc)/(v.conc + v2.conc)
+                        v2.c2 = (v.c2*v.conc + v2.c2*v2.conc)/(v.conc + v2.conc)
+                        v2.c3 = (v.c3*v.conc + v2.c3*v2.conc)/(v.conc + v2.conc)
                     end
                 end
             end
 
+            -- Increase Concentration
+            for y = 2, gridYCount - 1 do
+                for x = 2, gridXCount - 1 do
+
+                    if board.grid[y-1][x-1] == 1
+                    and board.grid[y-1][x] == 1
+                    and board.grid[y-1][x+1] == 1
+                    and board.grid[y][x-1] == 1
+                    and board.grid[y][x] == 1
+                    and board.grid[y][x+1] == 1
+                    and board.grid[y+1][x-1] == 1
+                    and board.grid[y+1][x] == 1
+                    and board.grid[y+1][x+1] == 1 then
+
+                        for k,v in pairs(pile) do
+
+                            if v.x == x-1 and v.y == y-1 then
+                                table.remove(pile, k)
+                            end
+                            if v.x == x-1 and v.y == y then
+                                table.remove(pile, k)
+                            end
+                            if v.x == x-1 and v.y == y+1 then
+                                table.remove(pile, k)
+                            end
+                            if v.x == x and v.y == y-1 then
+                                table.remove(pile, k)
+                            end
+                            if v.x == x and v.y == y then
+                                v.conc = 9
+                            end
+                            if v.x == x and v.y == y+1 then
+                                table.remove(pile, k)
+                            end
+                            if v.x == x+1 and v.y == y-1 then
+                                table.remove(pile, k)
+                            end
+                            if v.x == x+1 and v.y == y then
+                                table.remove(pile, k)
+                            end
+                            if v.x == x+1 and v.y == y+1 then
+                                table.remove(pile, k)
+                            end
+                        end
+                    end
+                end
+            end
 
         end
     elseif timer >= 2 then
     end
 end
+
+--------------------------------------------------------------------------------
 
 function love.draw()
     board:Animate()
@@ -224,6 +277,8 @@ function love.draw()
         v:Animate()
     end
 end
+
+--------------------------------------------------------------------------------
 
 -- Menu Controls
 function love.keypressed(key)
