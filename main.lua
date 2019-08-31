@@ -41,14 +41,10 @@ function love.load()
             c3 = 1,
             name = RandomVariable(9),
             alive = true,
-            directionQueue = 'left',
+            directionQueue = {'right'},
         }
         setmetatable(this, Player)
         return this
-    end
-
-    function Player:WarCry()
-        print(self.name .. ": GRAAAHH!!!")
     end
 
     -- Draw Player
@@ -107,9 +103,40 @@ function love.load()
 
 --------------------------------------------------------------------------------
 
-    player = Player:Create()
+        -- Stone Class
+        Stone = {}
+        Stone.__index = Stone
+        function Stone:Create()
+            local this =
+            {
+                x = math.floor(gridXCount/3),
+                y = math.floor(gridYCount/3),
+                c1 = 0,
+                c2 = 1,
+                c3 = 1,
+            }
+            setmetatable(this, Player)
+            return this
+        end
+
+
+        -- Draw Stone
+        function Stone:Animate()
+            love.graphics.setColor(self.c1, self.c2, self.c3)
+            drawCell(self.x, self.y)
+        end
+
+        -- Move Stone
+        function Stone:Move()
+            love.graphics.setColor(self.c1, self.c2, self.c3)
+            drawCell(self.x, self.y)
+        end
+--------------------------------------------------------------------------------
+
     board = Board:Create()
     board:Clear()
+    player = Player:Create()
+    stone = Stone:Create()
 end
 
 function love.update(dt)
@@ -119,6 +146,65 @@ function love.update(dt)
         if timer >= timerLimit then
             -- Handle Game Speed
             timer = timer - timerLimit
+
+
+                    -- Player Movement
+            if #player.directionQueue > 1 then
+                table.remove(player.directionQueue, 1)
+            end
+
+            local nextXPosition = player.x
+            local nextYPosition = player.y
+
+            if player.directionQueue[1] == 'right' then
+                nextXPosition = nextXPosition + 1
+                if nextXPosition > gridXCount then
+                    nextXPosition = 1
+                end
+            elseif player.directionQueue[1] == 'left' then
+                nextXPosition = nextXPosition - 1
+                if nextXPosition < 1 then
+                    nextXPosition = gridXCount
+                end
+            elseif player.directionQueue[1] == 'down' then
+                nextYPosition = nextYPosition + 1
+                if nextYPosition > gridYCount then
+                    nextYPosition = 1
+                end
+            elseif player.directionQueue[1] == 'up' then
+                nextYPosition = nextYPosition - 1
+                if nextYPosition < 1 then
+                    nextYPosition = gridYCount
+                end
+            end
+
+            -- Push Stone
+            if stone.x == nextXPosition
+            and stone.y == nextYPosition then
+                if stone.x == player.x
+                and stone.y == player.y - 1 then
+                    stone.y = stone.y - 1
+                end
+                if stone.x == player.x
+                and stone.y == player.y + 1 then
+                    stone.y = stone.y + 1
+                end
+                if stone.y == player.y
+                and stone.x == player.x - 1 then
+                    stone.x = stone.x - 1
+                end
+                if stone.y == player.y
+                and stone.x == player.x + 1 then
+                    stone.x = stone.x + 1
+                end
+            end
+
+            if canMove then
+                player.x = nextXPosition
+                player.y = nextYPosition
+            end
+
+            canMove = false
         end
 
     elseif timer >= 2 then
@@ -130,19 +216,24 @@ function love.draw()
 
     board:Animate()
     player:Animate()
+    stone:Animate()
 
 end
 
 -- Player Controls
 function love.keypressed(key)
     if key == 'right' then
-        player.x = player.x + 1
+        table.insert(player.directionQueue, 'right')
+        canMove = true
     elseif key == 'left' then
-        player.x = player.x - 1
+        table.insert(player.directionQueue, 'left')
+        canMove = true
     elseif key == 'up' then
-        player.y = player.y - 1
+        table.insert(player.directionQueue, 'up')
+        canMove = true
     elseif key == 'down' then
-        player.y = player.y + 1
+        table.insert(player.directionQueue, 'down')
+        canMove = true
     elseif key == 'q' then
         timerLimit = timerLimit + 0.005
     elseif key == 'w' then
