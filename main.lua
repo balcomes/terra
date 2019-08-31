@@ -100,44 +100,90 @@ function love.load()
         end
     end
 
+    --------------------------------------------------------------------------------
+
+    -- Ground Class
+    Ground = {}
+    Ground.__index = Ground
+    function Ground:Create()
+        local this =
+        {
+            grid = {},
+            c1 = math.random(),
+            c2 = math.random(),
+            c3 = math.random(),
+        }
+        setmetatable(this, Ground)
+        return this
+    end
+
+    -- Clear Floor
+    function Ground:Clear()
+        for y = 1, gridYCount do
+            self.grid[y] = {}
+            for x = 1, gridXCount do
+                self.grid[y][x] = 0
+            end
+        end
+    end
+
+    -- Grid Background
+    function Ground:Animate()
+        for y = 10, gridYCount - 10 do
+            for x = 10, gridXCount -10 do
+                self.grid[y][x] = 1
+                local cellDrawSize = cellSize - 1
+                love.graphics.setColor(135/255, 140/255, 45/255)
+                love.graphics.rectangle(
+                    'fill',
+                    (x - 1) * cellSize,
+                    (y - 1) * cellSize,
+                    cellDrawSize,
+                    cellDrawSize
+                )
+            end
+        end
+    end
 --------------------------------------------------------------------------------
 
-        -- Stone Class
-        Stone = {}
-        Stone.__index = Stone
-        function Stone:Create(c)
+    -- Stone Class
+    Stone = {}
+    Stone.__index = Stone
+    function Stone:Create(c)
 
-            local this =
-            {
-                x = math.random(1, gridXCount),
-                y = math.random(1, gridYCount),
-                c1 = math.random(),
-                c2 = math.random(),
-                c3 = math.random(),
-                conc = c,
-                blink = false,
-            }
-            setmetatable(this, Stone)
-            return this
-        end
+        local this =
+        {
+            x = math.random(1, gridXCount),
+            y = math.random(1, gridYCount),
+            c1 = math.random(),
+            c2 = math.random(),
+            c3 = math.random(),
+            conc = c,
+            blink = false,
+        }
+        setmetatable(this, Stone)
+        return this
+    end
 
-        -- Draw Stone
-        function Stone:Animate()
-            love.graphics.setColor(self.c1, self.c2, self.c3)
-            drawCell(self.x, self.y)
-        end
+    -- Draw Stone
+    function Stone:Animate()
+        love.graphics.setColor(self.c1, self.c2, self.c3)
+        drawCell(self.x, self.y)
+    end
 
-        -- Blink
-        function Stone:Blink()
-            self.c1 = self.c2
-            self.c2 = self.c3
-            self.c3 = self.c1
-        end
+    -- Blink
+    function Stone:Blink()
+        self.c1 = self.c2
+        self.c2 = self.c3
+        self.c3 = self.c1
+    end
 
 --------------------------------------------------------------------------------
 
     board = Board:Create()
     board:Clear()
+    floor = Ground:Create()
+    floor:Clear()
     player = Player:Create()
     for i = 1,100 do
         table.insert(pile, Stone:Create(1))
@@ -170,21 +216,25 @@ function love.update(dt)
             -- Player Movement
             if love.keyboard.isDown( "up" )
             and player.y > 2
+            and floor.grid[player.y - 1][player.x] == 1
             and board.grid[player.y - 1][player.x] + board.grid[player.y - 2][player.x] ~= 2 then
                 player.y = player.y - 1
             end
             if love.keyboard.isDown( "down" )
             and player.y < gridYCount - 1
+            and floor.grid[player.y + 1][player.x] == 1
             and board.grid[player.y + 1][player.x] + board.grid[player.y + 2][player.x] ~= 2 then
                 player.y = player.y + 1
             end
             if love.keyboard.isDown( "left" )
             and player.x > 2
+            and floor.grid[player.y][player.x - 1] == 1
             and board.grid[player.y][player.x - 1] + board.grid[player.y][player.x - 2] ~= 2 then
                 player.x = player.x - 1
             end
             if love.keyboard.isDown( "right" )
             and player.x < gridXCount - 1
+            and floor.grid[player.y][player.x + 1] == 1
             and board.grid[player.y][player.x + 1] + board.grid[player.y][player.x + 2] ~= 2 then
                 player.x = player.x + 1
             end
@@ -291,6 +341,7 @@ end
 
 function love.draw()
     board:Animate()
+    floor:Animate()
     player:Animate()
     for k,v in pairs(pile) do
         v:Animate()
