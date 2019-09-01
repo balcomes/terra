@@ -166,58 +166,66 @@ function love.load()
     function Board:Erode()
 
         for k,v in  pairs(flow) do
-            self.grid[v.y][v.x] = 4
+            self.grid[v.y][v.x] = "lava"
         end
 
         for y = 2, gridYCount - 1 do
 
             for x = 2, gridXCount - 1 do
-                if self.grid[y][x] == 1 then
-                    dirt_water = spread(self.grid,x,y,0)
+                if self.grid[y][x] == "dirt" then
+                    dirt_water = spread(self.grid,x,y,"water")
                     if math.random() < dirt_water/80 then
-                        self.grid[y][x] = 2
+                        self.grid[y][x] = "sand"
                     end
                 end
 
-                if self.grid[y][x] == 2 then
-                    sand_water = spread(self.grid,x,y,0)
-                    if math.random() < sand_water/8000 then
-                        self.grid[y][x] = 0
+                if self.grid[y][x] == "sand" then
+                    sand_water = spread(self.grid,x,y,"water")
+                    if math.random() < sand_water/2000 then
+                        self.grid[y][x] = "water"
                     end
                 end
 
-                if self.grid[y][x] == 3 then
-                    grass_water = spread(self.grid,x,y,0)
-                    grass_sand = spread(self.grid,x,y,2)
+                if self.grid[y][x] == "grass" then
+                    grass_water = spread(self.grid,x,y,"water")
+                    grass_sand = spread(self.grid,x,y,"sand")
                     if math.random() < grass_water*grass_sand then
-                        self.grid[y][x] = 1
+                        self.grid[y][x] = "dirt"
                     end
                 end
 
-                if self.grid[y][x] == 1 then
-                    dirt_grass = spread(self.grid,x,y,3)
-                    dirt_sand = spread(self.grid,x,y,2)
+                if self.grid[y][x] == "dirt" then
+                    dirt_grass = spread(self.grid,x,y,"grass")
+                    dirt_sand = spread(self.grid,x,y,"sand")
                     if math.random() < dirt_grass*dirt_sand/2000 + .001 then
-                        self.grid[y][x] = 3
+                        self.grid[y][x] = "grass"
                     end
                 end
 
+                if self.grid[y][x] == "lava" then
+                    if math.random() < .1 then
+                        self.grid[y][x] = "dirt"
+                    end
+                end
 
-                if self.grid[y][x] ~= 6 then
-                    any_lava = spread(self.grid,x,y,4)
-                    if math.random() < any_lava/100 then
+                if self.grid[y][x] ~= "stone" or self.grid[y][x] ~= "lava" then
+                    any_lava = spread(self.grid,x,y,"lava")
+                    if self.grid[y][x] == "water" then
+                        water_lava = spread(self.grid,x,y,"lava")
+                        if math.random() < any_lava/100 then
+                            self.grid[y][x] = "lava"
+                        end
+                    elseif math.random() < any_lava/100 then
                         if math.random() < 0.1 then
                             table.insert(pile, Stone:Create(x,y,1))
+                        else
+                            self.grid[y][x] = "lava"
                         end
-                        self.grid[y][x] = 1
-
-                    elseif math.random() < any_lava/200 then
-                        self.grid[y][x] = 4
                     end
                 end
 
-                if self.grid[player.y][player.x] == 3 then
-                    self.grid[player.y][player.x] = 1
+                if self.grid[player.y][player.x] == "grass" then
+                    self.grid[player.y][player.x] = "dirt"
                 end
 
             end
@@ -296,13 +304,13 @@ function love.load()
     board:Fill()
     player = Player:Create()
 
-    for i = 1,10 do
+    for i = 1,2 do
         table.insert(pile, Stone:Create(math.random(10, gridXCount - 10),math.random(10, gridYCount - 10),1))
     end
 
     for i = 1,2 do
-        table.insert(flow, Lava:Create(math.random(10, gridXCount - 10),
-                                       math.random(10, gridYCount - 10)))
+        table.insert(flow, Lava:Create(math.random(5, gridXCount - 5),
+                                       math.random(5, gridYCount - 5)))
     end
 
 end
@@ -320,10 +328,8 @@ function love.update(dt)
             timer = timer - timerLimit
 
             for k,v in pairs(pile) do
-                if board.grid[v.y][v.x] ~= "water" then
-                    board.grid[v.y][v.x] = "lava"
-                elseif board.grid[v.y][v.x] == "water" then
-                    board.grid[v.y][v.x] = "soil"
+                if board.grid[v.y][v.x] == "water" then
+                    board.grid[v.y][v.x] = "dirt"
                     table.remove(pile,k)
                 end
                 if v.blink == true then
@@ -467,13 +473,13 @@ end
 
 function love.draw()
     board:Animate()
-    player:Animate()
     for k,v in pairs(pile) do
         v:Animate()
     end
     for k,v in pairs(flow) do
         v:Animate()
     end
+    player:Animate()
 end
 
 --------------------------------------------------------------------------------
