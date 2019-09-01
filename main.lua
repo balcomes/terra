@@ -9,6 +9,41 @@ function love.load()
     gridYCount = math.floor(love.graphics.getHeight()/cellSize + 0.5)
     love.graphics.setBackgroundColor(25/255, 30/255, 35/255)
 
+
+function spread(g,x,y,c,n)
+    local tally = 0
+    if g[y][x] == c then
+        if g[y-1][x-1] == n then
+            tally = tally + 1
+        end
+        if g[y-1][x] == n then
+            tally = tally + 1
+        end
+        if g[y-1][x+1] == n then
+            tally = tally + 1
+        end
+        if g[y][x-1] == n  then
+            tally = tally + 1
+        end
+
+        if g[y][x+1] == n then
+            tally = tally + 1
+        end
+        if g[y+1][x-1] == n then
+            tally = tally + 1
+        end
+        if g[y+1][x] == n then
+            tally = tally + 1
+        end
+        if g[y+1][x+1]== n then
+            tally = tally + 1
+        end
+    end
+    return tally
+end
+
+
+
     -- Maybe need random names in future
     function RandomVariable(length)
     	local res = ""
@@ -133,13 +168,16 @@ function love.load()
     function Ground:Animate()
         for y = 1, gridYCount do
             for x = 1, gridXCount do
-                if self.grid[y][x] == 1 or self.grid[y][x] == 2 then
+                if self.grid[y][x] ~= 0 then
                     local cellDrawSize = cellSize - 1
                     if self.grid[y][x] == 1 then
                         love.graphics.setColor(135/255, 140/255, 45/255)
                     end
                     if self.grid[y][x] == 2 then
                         love.graphics.setColor(235/255, 240/255, 245/255)
+                    end
+                    if self.grid[y][x] == 3 then
+                        love.graphics.setColor(13/255, 240/255, 45/255)
                     end
                     love.graphics.rectangle(
                         'fill',
@@ -167,41 +205,36 @@ function love.load()
         for y = 1, gridYCount do
             for x = 1, gridXCount do
                 if self.grid[y][x] == 1 then
-
-                    chance = self.grid[y-1][x-1] +
-                    self.grid[y-1][x] +
-                    self.grid[y-1][x+1] +
-                    self.grid[y][x-1] +
-                    self.grid[y][x] +
-                    self.grid[y][x+1] +
-                    self.grid[y+1][x-1] +
-                    self.grid[y+1][x] +
-                    self.grid[y+1][x+1]
-
-                    if math.random()*math.random()*math.random() > chance/9 then
+                    chance = spread(self.grid,x,y,1,0)
+                    if math.random() < chance/8 then
                         self.grid[y][x] = 2
                     end
                 end
-
                 if self.grid[y][x] == 2 then
-
-                    chance = self.grid[y-1][x-1] +
-                    self.grid[y-1][x] +
-                    self.grid[y-1][x+1] +
-                    self.grid[y][x-1] +
-                    self.grid[y][x] +
-                    self.grid[y][x+1] +
-                    self.grid[y+1][x-1] +
-                    self.grid[y+1][x] +
-                    self.grid[y+1][x+1]
-
-                    if math.random()*math.random()*math.random() > chance/9 then
+                    chance = spread(self.grid,x,y,2,0)
+                    if math.random() < chance/8 then
                         self.grid[y][x] = 0
                     end
                 end
             end
         end
     end
+
+    -- Ground Grass
+    function Ground:Grass()
+        for y = 1, gridYCount do
+            for x = 1, gridXCount do
+                local tally = 0
+                if self.grid[y][x] == 1 then
+                    chance = spread(self.grid,x,y,1,3)
+                    if math.random()*math.random() < chance/8 + .01 then
+                        self.grid[y][x] = 3
+                    end
+                end
+            end
+        end
+    end
+
 
 --------------------------------------------------------------------------------
 
@@ -236,6 +269,8 @@ function love.load()
         self.c2 = self.c3
         self.c3 = self.c1
     end
+
+
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -278,6 +313,7 @@ function love.update(dt)
             end
 
             floor:Erode()
+            floor:Grass()
 
             -- Player Movement
             if love.keyboard.isDown( "up" )
