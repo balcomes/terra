@@ -5,6 +5,7 @@ function love.load()
     timerLimit = 0.1
     pile = {}
     flow = {}
+    forest = {}
 
     gridXCount = math.floor(love.graphics.getWidth()/cellSize + 0.5)
     gridYCount = math.floor(love.graphics.getHeight()/cellSize + 0.5)
@@ -172,6 +173,8 @@ function love.load()
         for y = 2, gridYCount - 1 do
 
             for x = 2, gridXCount - 1 do
+
+                -- Dirt to Sand
                 if self.grid[y][x] == "dirt" then
                     dirt_water = spread(self.grid,x,y,"water")
                     if math.random() < dirt_water/80 then
@@ -179,6 +182,7 @@ function love.load()
                     end
                 end
 
+                -- Sand to Water
                 if self.grid[y][x] == "sand" then
                     sand_water = spread(self.grid,x,y,"water")
                     if math.random() < sand_water/2000 then
@@ -186,6 +190,7 @@ function love.load()
                     end
                 end
 
+                -- Grass to Dirt
                 if self.grid[y][x] == "grass" then
                     grass_water = spread(self.grid,x,y,"water")
                     grass_sand = spread(self.grid,x,y,"sand")
@@ -194,6 +199,7 @@ function love.load()
                     end
                 end
 
+                -- Dirt to Grass
                 if self.grid[y][x] == "dirt" then
                     dirt_grass = spread(self.grid,x,y,"grass")
                     dirt_sand = spread(self.grid,x,y,"sand")
@@ -202,12 +208,24 @@ function love.load()
                     end
                 end
 
+                -- Grass to Tree
+                if self.grid[y][x] == "grass" then
+                    dirt_grass = spread(self.grid,x,y,"grass")
+                    dirt_sand = spread(self.grid,x,y,"sand")
+                    if math.random() < dirt_grass*dirt_sand/2000 + .001 then
+                        table.insert(forest,Tree:Create(x,y))
+                        self.grid[y][x] = "tree"
+                    end
+                end
+
+                -- Lava to Dirt
                 if self.grid[y][x] == "lava" then
                     if math.random() < .1 then
                         self.grid[y][x] = "dirt"
                     end
                 end
 
+                -- Spread Lava
                 if self.grid[y][x] ~= "stone" or self.grid[y][x] ~= "lava" then
                     any_lava = spread(self.grid,x,y,"lava")
                     if self.grid[y][x] == "water" then
@@ -218,12 +236,14 @@ function love.load()
                     elseif math.random() < any_lava/100 then
                         if math.random() < 0.1 then
                             table.insert(pile, Stone:Create(x,y,1))
+                            self.grid[y][x] = "stone"
                         else
                             self.grid[y][x] = "lava"
                         end
                     end
                 end
 
+                -- Trample Grass
                 if self.grid[player.y][player.x] == "grass" then
                     self.grid[player.y][player.x] = "dirt"
                 end
@@ -262,7 +282,6 @@ function love.load()
     Stone = {}
     Stone.__index = Stone
     function Stone:Create(xo,yo,c)
-
         local this =
         {
             x = xo,
@@ -273,27 +292,55 @@ function love.load()
             conc = c,
             blink = false,
         }
-
         if math.random() < 0.3 then
             this.blink = true
         end
-
+        board.grid[this.y][this.x] = "stone"
         setmetatable(this, Stone)
         return this
     end
 
-    -- Draw Stone
+    -- Stone Animate
     function Stone:Animate()
         love.graphics.setColor(self.c1, self.c2, self.c3)
         drawCell(self.x, self.y)
+        --board.grid[self.y][self.x] = "stone"
     end
 
-    -- Blink
+    -- Stone Blink
     function Stone:Blink()
         self.c1 = math.random()/2 + 0.5
         self.c2 = math.random()/2
         self.c3 = math.random()/2
     end
+
+--------------------------------------------------------------------------------
+
+-- Tree Class
+Tree = {}
+Tree.__index = Tree
+function Tree:Create(xo,yo,c)
+    local this =
+    {
+        x = xo,
+        y = yo,
+        c1 = 0.5,
+        c2 = 0.5,
+        c3 = 0.1,
+        hp = 50,
+    }
+    board.grid[this.y][this.x] = "stone"
+    setmetatable(this, Stone)
+    return this
+end
+
+-- Tree Animate
+function Tree:Animate()
+    love.graphics.setColor(self.c1, self.c2, self.c3)
+    drawCell(self.x, self.y)
+    --board.grid[self.y][self.x] = "tree"
+
+end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -344,6 +391,7 @@ function love.update(dt)
             and player.y > 2
             and board.grid[player.y - 1][player.x] ~= "water"
             and board.grid[player.y - 1][player.x] ~= "lava"
+            and board.grid[player.y - 1][player.x] ~= "tree"
             and (board.grid[player.y - 1][player.x] ~= "stone" or board.grid[player.y - 2][player.x] ~= "stone") then
                 player.y = player.y - 1
             end
@@ -351,6 +399,7 @@ function love.update(dt)
             and player.y < gridYCount - 1
             and board.grid[player.y + 1][player.x] ~= "water"
             and board.grid[player.y + 1][player.x] ~= "lava"
+            and board.grid[player.y + 1][player.x] ~= "tree"
             and (board.grid[player.y + 1][player.x] ~= "stone" or board.grid[player.y + 2][player.x] ~= "stone") then
                 player.y = player.y + 1
             end
@@ -358,6 +407,7 @@ function love.update(dt)
             and player.x > 2
             and board.grid[player.y][player.x - 1] ~= "water"
             and board.grid[player.y][player.x - 1] ~= "lava"
+            and board.grid[player.y][player.x - 1] ~= "tree"
             and (board.grid[player.y][player.x - 1] ~= "stone" or board.grid[player.y][player.x - 2] ~= "stone") then
                 player.x = player.x - 1
             end
@@ -365,6 +415,7 @@ function love.update(dt)
             and player.x < gridXCount - 1
             and board.grid[player.y][player.x + 1] ~= "water"
             and board.grid[player.y][player.x + 1] ~= "lava"
+            and board.grid[player.y][player.x + 1] ~= "tree"
             and (board.grid[player.y][player.x + 1] ~= "stone" or board.grid[player.y][player.x + 2] ~= "stone") then
                 player.x = player.x + 1
             end
@@ -394,6 +445,37 @@ function love.update(dt)
                         stone.x = stone.x + 1
                     end
                 end
+            end
+
+            -- Cut Tree
+            for k,tree in pairs(forest) do
+                if love.keyboard.isDown( "up" )
+                and tree.x == player.x
+                and tree.y + 1 == player.y then
+                    tree.hp = tree.hp - 1
+                end
+                if love.keyboard.isDown( "down" )
+                and tree.x == player.x
+                and tree.y - 1 == player.y then
+                    tree.hp = tree.hp - 1
+                end
+                if love.keyboard.isDown( "left" )
+                and tree.x + 1 == player.x
+                and tree.y == player.y then
+                    tree.hp = tree.hp - 1
+                end
+                if love.keyboard.isDown( "right" )
+                and tree.x - 1 == player.x
+                and tree.y == player.y then
+                    tree.hp = tree.hp - 1
+                end
+
+                if tree.hp < 1 then
+                    table.insert(pile, Stone:Create(tree.x,tree.y,1))
+                    board.grid[tree.y][tree.x] = "dirt"
+                    table.remove(forest,k)
+                end
+
             end
 
             -- Color Mix
@@ -477,6 +559,9 @@ function love.draw()
         v:Animate()
     end
     for k,v in pairs(flow) do
+        v:Animate()
+    end
+    for k,v in pairs(forest) do
         v:Animate()
     end
     player:Animate()
