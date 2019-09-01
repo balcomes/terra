@@ -4,40 +4,39 @@ function love.load()
     timer = 0
     timerLimit = 0.1
     pile = {}
+    flow = {}
 
     gridXCount = math.floor(love.graphics.getWidth()/cellSize + 0.5)
     gridYCount = math.floor(love.graphics.getHeight()/cellSize + 0.5)
     love.graphics.setBackgroundColor(25/255, 30/255, 35/255)
 
 
-function spread(g,x,y,c,n)
+function spread(g,x,y,n)
     local tally = 0
-    if g[y][x] == c then
-        if g[y-1][x-1] == n then
-            tally = tally + 1
-        end
-        if g[y-1][x] == n then
-            tally = tally + 1
-        end
-        if g[y-1][x+1] == n then
-            tally = tally + 1
-        end
-        if g[y][x-1] == n  then
-            tally = tally + 1
-        end
+    if g[y-1][x-1] == n then
+        tally = tally + 1
+    end
+    if g[y-1][x] == n then
+        tally = tally + 1
+    end
+    if g[y-1][x+1] == n then
+        tally = tally + 1
+    end
+    if g[y][x-1] == n  then
+        tally = tally + 1
+    end
 
-        if g[y][x+1] == n then
-            tally = tally + 1
-        end
-        if g[y+1][x-1] == n then
-            tally = tally + 1
-        end
-        if g[y+1][x] == n then
-            tally = tally + 1
-        end
-        if g[y+1][x+1]== n then
-            tally = tally + 1
-        end
+    if g[y][x+1] == n then
+        tally = tally + 1
+    end
+    if g[y+1][x-1] == n then
+        tally = tally + 1
+    end
+    if g[y+1][x] == n then
+        tally = tally + 1
+    end
+    if g[y+1][x+1]== n then
+        tally = tally + 1
     end
     return tally
 end
@@ -137,7 +136,31 @@ end
         end
     end
 
-    --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+-- Lava Class
+Lava = {}
+Lava.__index = Lava
+function Lava:Create(xo,yo)
+    local this =
+    {
+        x = xo,
+        y = yo,
+        c1 = 1,
+        c2 = math.random()/9,
+        c3 = math.random()/9,
+    }
+    setmetatable(this, Lava)
+    return this
+end
+
+-- Draw Lava
+function Lava:Animate()
+    love.graphics.setColor(self.c1, self.c2, self.c3)
+    drawCell(self.x, self.y)
+end
+
+--------------------------------------------------------------------------------
 
     -- Ground Class
     Ground = {}
@@ -154,7 +177,7 @@ end
         return this
     end
 
-    -- Clear Floor
+    -- Ground Clear
     function Ground:Clear()
         for y = 1, gridYCount do
             self.grid[y] = {}
@@ -164,7 +187,7 @@ end
         end
     end
 
-    -- Ground Fill
+    -- Ground Draw
     function Ground:Animate()
         for y = 1, gridYCount do
             for x = 1, gridXCount do
@@ -178,6 +201,9 @@ end
                     end
                     if self.grid[y][x] == 3 then
                         love.graphics.setColor(13/255, 240/255, 45/255)
+                    end
+                    if self.grid[y][x] == 4 then
+                        love.graphics.setColor(1, math.random()/9, math.random()/9)
                     end
                     love.graphics.rectangle(
                         'fill',
@@ -202,66 +228,88 @@ end
 
     -- Ground Erode
     function Ground:Erode()
-        for y = 1, gridYCount do
-            for x = 1, gridXCount do
+
+        for k,v in  pairs(flow) do
+            self.grid[v.y][v.x] = 4
+        end
+
+        for y = 2, gridYCount - 1 do
+
+            for x = 2, gridXCount - 1 do
                 if self.grid[y][x] == 1 then
-                    chance = spread(self.grid,x,y,1,0)
-                    if math.random() < chance/8 then
+                    dirt_water = spread(self.grid,x,y,0)
+                    if math.random() < dirt_water/80 then
                         self.grid[y][x] = 2
                     end
                 end
+
                 if self.grid[y][x] == 2 then
-                    chance = spread(self.grid,x,y,2,0)
-                    if math.random() < chance/80 then
+                    sand_water = spread(self.grid,x,y,0)
+                    if math.random() < sand_water/8000 then
                         self.grid[y][x] = 0
                     end
                 end
+
                 if self.grid[y][x] == 3 then
-                    chance = spread(self.grid,x,y,3,0)
-                    if math.random() < chance/8 then
+                    grass_water = spread(self.grid,x,y,0)
+                    grass_sand = spread(self.grid,x,y,2)
+                    if math.random() < grass_water*grass_sand then
                         self.grid[y][x] = 1
                     end
                 end
 
-                self.grid[player.y][player.x] = 1
-
-            end
-        end
-    end
-
-    -- Ground Grass
-    function Ground:Grass()
-        for y = 1, gridYCount do
-            for x = 1, gridXCount do
-                local tally = 0
                 if self.grid[y][x] == 1 then
-                    chance = spread(self.grid,x,y,1,3)
-                    if math.random() < chance/30 + .001 then
+                    dirt_grass = spread(self.grid,x,y,3)
+                    dirt_sand = spread(self.grid,x,y,2)
+                    if math.random() < dirt_grass*dirt_sand/2000 + .001 then
                         self.grid[y][x] = 3
                     end
                 end
+
+
+                if self.grid[y][x] ~= 6 then
+                    any_lava = spread(self.grid,x,y,4)
+                    if math.random() < any_lava/100 then
+                        if math.random() < 0.1 then
+                            table.insert(pile, Stone:Create(x,y,1))
+                        end
+                        self.grid[y][x] = 1
+
+                    elseif math.random() < any_lava/200 then
+                        self.grid[y][x] = 4
+                    end
+                end
+
+                if self.grid[player.y][player.x] == 3 then
+                    self.grid[player.y][player.x] = 1
+                end
+
             end
         end
     end
-
 
 --------------------------------------------------------------------------------
 
     -- Stone Class
     Stone = {}
     Stone.__index = Stone
-    function Stone:Create(c)
+    function Stone:Create(xo,yo,c)
 
         local this =
         {
-            x = math.random(10, gridXCount - 10),
-            y = math.random(10, gridYCount - 10),
-            c1 = math.random(),
-            c2 = math.random(),
-            c3 = math.random(),
+            x = xo,
+            y = yo,
+            c1 = 0.1,
+            c2 = 0.15,
+            c3 = 0.2,
             conc = c,
             blink = false,
         }
+
+        if math.random() < 0.3 then
+            this.blink = true
+        end
+
         setmetatable(this, Stone)
         return this
     end
@@ -274,9 +322,9 @@ end
 
     -- Blink
     function Stone:Blink()
-        self.c1 = self.c2
-        self.c2 = self.c3
-        self.c3 = self.c1
+        self.c1 = math.random()/2 + 0.5
+        self.c2 = math.random()/2
+        self.c3 = math.random()/2
     end
 
 
@@ -291,14 +339,16 @@ end
     floor:Clear()
     floor:Fill()
     player = Player:Create()
+
     for i = 1,10 do
-        table.insert(pile, Stone:Create(1))
+        table.insert(pile, Stone:Create(math.random(10, gridXCount - 10),math.random(10, gridYCount - 10),1))
     end
-    for k,v in  pairs(pile) do
-        if math.random() < 0.2 then
-            v.blink = true
-        end
+
+    for i = 1,2 do
+        table.insert(flow, Lava:Create(math.random(5, gridXCount-5),
+                                       math.random(5, gridYCount-5)))
     end
+
 end
 
 --------------------------------------------------------------------------------
@@ -313,39 +363,47 @@ function love.update(dt)
             -- Handle Game Speed
             timer = timer - timerLimit
 
-            board:Clear()
+            --board:Clear()
             for k,v in pairs(pile) do
-                board.grid[v.y][v.x] = 1
+
+                if floor.grid[v.y][v.x] ~= 0 then
+                    floor.grid[v.y][v.x] = 6
+                elseif floor.grid[v.y][v.x] == 0 then
+                    floor.grid[v.y][v.x] = 1
+                    table.remove(pile,k)
+                end
+
                 if v.blink == true then
                     v:Blink()
                 end
             end
 
             floor:Erode()
-            floor:Grass()
+
+            --floor:Grass()
 
             -- Player Movement
             if love.keyboard.isDown( "up" )
             and player.y > 2
-            and floor.grid[player.y - 1][player.x] ~= 0
+            and (floor.grid[player.y - 1][player.x] ~= 0 and floor.grid[player.y - 1][player.x] ~= 4)
             and board.grid[player.y - 1][player.x] + board.grid[player.y - 2][player.x] ~= 2 then
                 player.y = player.y - 1
             end
             if love.keyboard.isDown( "down" )
             and player.y < gridYCount - 1
-            and floor.grid[player.y + 1][player.x] ~= 0
+            and (floor.grid[player.y + 1][player.x] ~= 0 and floor.grid[player.y + 1][player.x] ~= 4)
             and board.grid[player.y + 1][player.x] + board.grid[player.y + 2][player.x] ~= 2 then
                 player.y = player.y + 1
             end
             if love.keyboard.isDown( "left" )
             and player.x > 2
-            and floor.grid[player.y][player.x - 1] ~= 0
+            and (floor.grid[player.y][player.x - 1] ~= 0 and floor.grid[player.y][player.x - 1] ~= 4)
             and board.grid[player.y][player.x - 1] + board.grid[player.y][player.x - 2] ~= 2 then
                 player.x = player.x - 1
             end
             if love.keyboard.isDown( "right" )
             and player.x < gridXCount - 1
-            and floor.grid[player.y][player.x + 1] ~= 0
+            and (floor.grid[player.y][player.x + 1] ~= 0 and floor.grid[player.y][player.x + 1] ~= 4)
             and board.grid[player.y][player.x + 1] + board.grid[player.y][player.x + 2] ~= 2 then
                 player.x = player.x + 1
             end
@@ -356,28 +414,28 @@ function love.update(dt)
                 and stone.y == player.y then
                     if love.keyboard.isDown( "up" )
                     and stone.y > 3
-                    and board.grid[stone.y - 1][stone.x] ~= 1 then
+                    and floor.grid[stone.y - 1][stone.x] ~= 6 then
                         stone.y = stone.y - 1
                     end
                     if love.keyboard.isDown( "down" )
                     and stone.y < gridYCount - 2
-                    and board.grid[stone.y + 1][stone.x] ~= 1 then
+                    and floor.grid[stone.y + 1][stone.x] ~= 6 then
                         stone.y = stone.y + 1
                     end
                     if love.keyboard.isDown( "left" )
                     and stone.x > 3
-                    and board.grid[stone.y][stone.x - 1] ~= 1 then
+                    and floor.grid[stone.y][stone.x - 1] ~= 6 then
                         stone.x = stone.x - 1
                     end
                     if love.keyboard.isDown( "right" )
                     and stone.x < gridXCount - 2
-                    and board.grid[stone.y][stone.x + 1] ~= 1 then
+                    and floor.grid[stone.y][stone.x + 1] ~= 6 then
                         stone.x = stone.x + 1
                     end
                 end
             end
 
-            -- Color Mix
+            ----[[ Color Mix
             for k,v in pairs(pile) do
                 for k2,v2 in pairs(pile) do
                     if math.abs(v.x - v2.x) < 2 and math.abs(v.y - v2.y) < 2 then
@@ -394,6 +452,7 @@ function love.update(dt)
                     end
                 end
             end
+            --]]--
 
             -- Increase Concentration
             for y = 2, gridYCount - 1 do
@@ -457,6 +516,9 @@ function love.draw()
     floor:Animate()
     player:Animate()
     for k,v in pairs(pile) do
+        v:Animate()
+    end
+    for k,v in pairs(flow) do
         v:Animate()
     end
 end
