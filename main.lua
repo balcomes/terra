@@ -257,7 +257,7 @@ function love.load()
     -- Lava Class
     Lava = {}
     Lava.__index = Lava
-    function Lava:Create(xo,yo)
+    function Lava:Create(xo,yo,c)
         local this =
         {
             x = xo,
@@ -265,6 +265,8 @@ function love.load()
             c1 = 1,
             c2 = math.random()/9,
             c3 = math.random()/9,
+            conc = c,
+            blink = true,
         }
         setmetatable(this, Lava)
         return this
@@ -273,7 +275,17 @@ function love.load()
     -- Lava Animate
     function Lava:Animate()
         love.graphics.setColor(self.c1, self.c2, self.c3)
+        if self.blink == true then
+            self:Blink()
+        end
         drawCell(self.x, self.y)
+    end
+
+    -- Lava Blink
+    function Lava:Blink()
+        self.c1 = math.random()/2 + 0.5
+        self.c2 = math.random()/2
+        self.c3 = math.random()/2
     end
 
 --------------------------------------------------------------------------------
@@ -292,9 +304,6 @@ function love.load()
             conc = c,
             blink = false,
         }
-        if math.random() < 0.3 then
-            this.blink = true
-        end
         board.grid[this.y][this.x] = "stone"
         setmetatable(this, Stone)
         return this
@@ -305,13 +314,6 @@ function love.load()
         love.graphics.setColor(self.c1, self.c2, self.c3)
         drawCell(self.x, self.y)
         --board.grid[self.y][self.x] = "stone"
-    end
-
-    -- Stone Blink
-    function Stone:Blink()
-        self.c1 = math.random()/2 + 0.5
-        self.c2 = math.random()/2
-        self.c3 = math.random()/2
     end
 
 --------------------------------------------------------------------------------
@@ -327,7 +329,8 @@ function Tree:Create(xo,yo,c)
         c1 = 0.5,
         c2 = 0.5,
         c3 = 0.1,
-        hp = 50,
+        hp = 10,
+        conc = 1,
     }
     board.grid[this.y][this.x] = "stone"
     setmetatable(this, Stone)
@@ -357,7 +360,7 @@ end
 
     for i = 1,2 do
         table.insert(flow, Lava:Create(math.random(5, gridXCount - 5),
-                                       math.random(5, gridYCount - 5)))
+                                       math.random(5, gridYCount - 5),1))
     end
 
 end
@@ -378,9 +381,6 @@ function love.update(dt)
                 if board.grid[v.y][v.x] == "water" then
                     board.grid[v.y][v.x] = "dirt"
                     table.remove(pile,k)
-                end
-                if v.blink == true then
-                    v:Blink()
                 end
             end
 
@@ -426,22 +426,22 @@ function love.update(dt)
                 and stone.y == player.y then
                     if love.keyboard.isDown( "up" )
                     and stone.y > 3
-                    and board.grid[stone.y - 1][stone.x] ~= "stone" then
+                    then--and board.grid[stone.y - 1][stone.x] ~= "stone" then
                         stone.y = stone.y - 1
                     end
                     if love.keyboard.isDown( "down" )
                     and stone.y < gridYCount - 2
-                    and board.grid[stone.y + 1][stone.x] ~= "stone" then
+                    then--and board.grid[stone.y + 1][stone.x] ~= "stone" then
                         stone.y = stone.y + 1
                     end
                     if love.keyboard.isDown( "left" )
                     and stone.x > 3
-                    and board.grid[stone.y][stone.x - 1] ~= "stone" then
+                    then--and board.grid[stone.y][stone.x - 1] ~= "stone" then
                         stone.x = stone.x - 1
                     end
                     if love.keyboard.isDown( "right" )
                     and stone.x < gridXCount - 2
-                    and board.grid[stone.y][stone.x + 1] ~= "stone" then
+                    then--and board.grid[stone.y][stone.x + 1] ~= "stone" then
                         stone.x = stone.x + 1
                     end
                 end
@@ -478,9 +478,10 @@ function love.update(dt)
 
             end
 
+            --[[
             -- Color Mix
-            for k,v in pairs(pile) do
-                for k2,v2 in pairs(pile) do
+            for k,v in pairs(flow) do
+                for k2,v2 in pairs(flow) do
                     if math.abs(v.x - v2.x) < 2 and math.abs(v.y - v2.y) < 2 then
                         if v.blink == false then
                             v.c1 = (v.c1*v.conc + v2.c1*v2.conc)/(v.conc + v2.conc)
@@ -495,6 +496,7 @@ function love.update(dt)
                     end
                 end
             end
+            ]]--
 
             -- Increase Concentration
             for y = 2, gridYCount - 1 do
