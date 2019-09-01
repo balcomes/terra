@@ -212,10 +212,19 @@ end
                 end
                 if self.grid[y][x] == 2 then
                     chance = spread(self.grid,x,y,2,0)
-                    if math.random() < chance/8 then
+                    if math.random() < chance/80 then
                         self.grid[y][x] = 0
                     end
                 end
+                if self.grid[y][x] == 3 then
+                    chance = spread(self.grid,x,y,3,0)
+                    if math.random() < chance/8 then
+                        self.grid[y][x] = 1
+                    end
+                end
+
+                self.grid[player.y][player.x] = 1
+
             end
         end
     end
@@ -227,7 +236,7 @@ end
                 local tally = 0
                 if self.grid[y][x] == 1 then
                     chance = spread(self.grid,x,y,1,3)
-                    if math.random()*math.random() < chance/8 + .01 then
+                    if math.random() < chance/30 + .001 then
                         self.grid[y][x] = 3
                     end
                 end
