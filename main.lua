@@ -333,9 +333,9 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = 150/255,
-            c2 = 150/255,
-            c3 = 100/255,
+            c1 = 110/255,
+            c2 = 80/255,
+            c3 = 90/255,
         }
         setmetatable(this, Dirt)
         return this
@@ -383,9 +383,9 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = 200/255,
-            c2 = 200/255,
-            c3 = 200/255,
+            c1 = 180/255,
+            c2 = 180/255,
+            c3 = 170/255,
         }
         setmetatable(this, Sand)
         return this
@@ -435,8 +435,8 @@ function love.load()
             x = xo,
             y = yo,
             c1 = 50/255,
-            c2 = 200/255,
-            c3 = 50/255,
+            c2 = 170/255,
+            c3 = 60/255,
         }
         setmetatable(this, Grass)
         return this
