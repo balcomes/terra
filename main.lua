@@ -170,6 +170,56 @@ function love.load()
     end
 
 --------------------------------------------------------------------------------
+-- Board
+--------------------------------------------------------------------------------
+
+    -- Board Class
+    Board = {}
+    Board.__index = Board
+    function Board:Create()
+        local this =
+        {
+            grid = {},
+        }
+        for y = 1, gridYCount do
+            this.grid[y] = {}
+            for x = 1, gridXCount do
+                this.grid[y][x] = ""
+            end
+        end
+        setmetatable(this, Board)
+        return this
+    end
+
+    -- Board Clear
+    function Board:Clear()
+        for y = 1, gridYCount do
+            self.grid[y] = {}
+            for x = 1, gridXCount do
+                self.grid[y][x] = ""
+            end
+        end
+    end
+
+    -- Board Water Fill
+    function Board:Ocean()
+        for y = 1, gridYCount do
+            for x = 1, gridXCount do
+                table.insert(water_table, Water:Create(x,y))
+            end
+        end
+    end
+
+    -- Board Island Fill
+    function Board:Island()
+        for y = 10, gridYCount - 10 do
+            for x = 10, gridXCount -10 do
+                table.insert(dirt_table, Dirt:Create(x,y))
+            end
+        end
+    end
+
+--------------------------------------------------------------------------------
 -- Player
 --------------------------------------------------------------------------------
 
@@ -300,6 +350,7 @@ function love.load()
             blink = true,
         }
         setmetatable(this, Water)
+        board.grid[yo][xo] = "water"
         return this
     end
 
@@ -338,6 +389,7 @@ function love.load()
             c3 = 90/255,
         }
         setmetatable(this, Dirt)
+        board.grid[yo][xo] = "dirt"
         return this
     end
 
@@ -352,7 +404,6 @@ function love.load()
         local result = false
         dirt_water = spread(board.grid,self.x,self.y,"water")
         if math.random() < dirt_water/80 then
-            board.grid[self.y][self.x] = "sand"
             table.insert(sand_table, Sand:Create(self.x,self.y))
             result = true
         end
@@ -364,7 +415,6 @@ function love.load()
         local result = false
         grass_tree = spread(board.grid, self.x, self.y, "grass")
         if math.random() < grass_tree/2000 + 0.001 then
-            board.grid[self.y][self.x] = "grass"
             table.insert(grass_table, Grass:Create(self.x, self.y))
             result = true
         end
@@ -388,6 +438,7 @@ function love.load()
             c3 = 170/255,
         }
         setmetatable(this, Sand)
+        board.grid[yo][xo] = "sand"
         return this
     end
 
@@ -395,7 +446,6 @@ function love.load()
     function Sand:Animate()
         love.graphics.setColor(self.c1, self.c2, self.c3)
         drawCell(self.x, self.y)
-        board.grid[self.y][self.x] = "sand"
     end
 
     -- Sand to Water
@@ -403,7 +453,6 @@ function love.load()
         local result = false
         sand_water = spread(board.grid, self.x, self.y, "water")
         if math.random() < sand_water/2000 then
-            board.grid[self.y][self.x] = "water"
             table.insert(water_table, Water:Create(self.x, self.y))
             result = true
         end
@@ -415,7 +464,6 @@ function love.load()
         local result = false
         sand_grass = spread(board.grid, self.x, self.y, "grass")
         if math.random() < sand_grass/2000 then
-            board.grid[self.y][self.x] = "dirt"
             table.insert(dirt_table, Dirt:Create(self.x, self.y))
             result = true
         end
@@ -439,6 +487,7 @@ function love.load()
             c3 = 60/255,
         }
         setmetatable(this, Grass)
+        board.grid[yo][xo] = "grass"
         return this
     end
 
@@ -452,8 +501,7 @@ function love.load()
     function Grass:Grass_to_Tree()
         local result = false
         grass_tree = spread(board.grid, self.x, self.y, "tree")
-        if math.random() < grass_tree/2000 + 0.0001 then
-            board.grid[self.y][self.x] = "tree"
+        if math.random() < grass_tree/2000 then
             table.insert(tree_table, Tree:Create(self.x, self.y))
             result = true
         end
@@ -464,7 +512,17 @@ function love.load()
     function Grass:Grass_to_Dirt()
         local result = false
         if self.x == player.x and self.y == player.y then
-            board.grid[self.y][self.x] = "dirt"
+            table.insert(dirt_table, Dirt:Create(self.x, self.y))
+            result = true
+        end
+        return result
+    end
+
+    -- Grass to Dirt (Next to Water)
+    function Grass:Grass_to_Dirt()
+        local result = false
+        grass_water = spread(board.grid, self.x, self.y, "water")
+        if math.random() < grass_water/100 then
             table.insert(dirt_table, Dirt:Create(self.x, self.y))
             result = true
         end
@@ -489,6 +547,7 @@ function love.load()
             hp = 10,
         }
         setmetatable(this, Tree)
+        board.grid[yo][xo] = "tree"
         return this
     end
 
@@ -500,7 +559,6 @@ function love.load()
 
     -- Tree to Stone
     function Tree:Tree_to_Stone()
-        board.grid[self.y][self.x] = "stone"
         table.insert(dirt_table, Dirt:Create(self.x, self.y))
         table.insert(stone_table, Stone:Create(self.x, self.y))
     end
@@ -522,6 +580,7 @@ function love.load()
             blink = true,
         }
         setmetatable(this, Lava)
+        board.grid[yo][xo] = "lava"
         return this
     end
 
@@ -545,7 +604,6 @@ function love.load()
     function Lava:Lava_to_Dirt()
         local result = false
         if math.random() < 0.01 then
-            board.grid[self.y][self.x] = "dirt"
             table.insert(dirt_table, Dirt:Create(self.x, self.y))
             result = true
         end
@@ -569,6 +627,7 @@ function love.load()
             c3 = 60/255,
         }
         setmetatable(this, Stone)
+        board.grid[yo][xo] = "stone"
         return this
     end
 
@@ -583,7 +642,6 @@ function love.load()
         local result = false
         stone_water = spread(board.grid,self.x,self.y,"water")
         if math.random() < stone_water/80 then
-            board.grid[self.y][self.x] = "dirt"
             table.insert(dirt_table, Dirt:Create(self.x,self.y))
             result = true
         end
@@ -591,60 +649,13 @@ function love.load()
     end
 
 --------------------------------------------------------------------------------
--- Board
---------------------------------------------------------------------------------
-
-    -- Board Class
-    Board = {}
-    Board.__index = Board
-    function Board:Create()
-        local this =
-        {
-            grid = {},
-        }
-        for y = 1, gridYCount do
-            this.grid[y] = {}
-            for x = 1, gridXCount do
-                this.grid[y][x] = ""
-            end
-        end
-        setmetatable(this, Board)
-        return this
-    end
-
-    -- Board Clear
-    function Board:Clear()
-        for y = 1, gridYCount do
-            self.grid[y] = {}
-            for x = 1, gridXCount do
-                self.grid[y][x] = ""
-            end
-        end
-    end
-
-    -- Board Water Fill
-    function Board:Ocean()
-        for y = 1, gridYCount do
-            for x = 1, gridXCount do
-                table.insert(water_table, Water:Create(x,y))
-            end
-        end
-    end
-
-    -- Board Island Fill
-    function Board:Island()
-        for y = 10, gridYCount - 10 do
-            for x = 10, gridXCount -10 do
-                table.insert(dirt_table, Dirt:Create(x,y))
-            end
-        end
-    end
 
     -- Setup Board
     board = Board:Create()
     Board:Ocean()
     Board:Island()
-    table.insert(woodchuck_table,Woodchuck:Create(math.floor(gridXCount/2) - 1, math.floor(gridYCount/2 - 1)))
+    table.insert(woodchuck_table,Woodchuck:Create(math.floor(gridXCount/2) - 1,
+                                                  math.floor(gridYCount/2 - 1)))
     -- Spawn Player
     reset()
 end
@@ -668,6 +679,7 @@ function love.update(dt)
 
 
             -- Update Board
+            --[[
             for k,v in pairs(water_table) do
                 board.grid[v.y][v.x] = "water"
             end
@@ -689,11 +701,11 @@ function love.update(dt)
             for k,v in pairs(tree_table) do
                 board.grid[v.y][v.x] = "tree"
             end
+            ]]--
 
             -- Erode
-            for k,v in pairs(water_table) do
-
-            end
+            --for k,v in pairs(water_table) do
+            --end
             for k,v in pairs(dirt_table) do
                 if v:Dirt_to_Sand() then
                     table.remove(dirt_table, k)
@@ -712,7 +724,7 @@ function love.update(dt)
             end
             for k,v in pairs(grass_table) do
                 if v:Grass_to_Tree() then
-                    table.remove(grass_table, k)
+                    --table.remove(grass_table, k)
                 end
                 if v:Grass_to_Dirt() then
                     table.remove(grass_table, k)
@@ -728,9 +740,8 @@ function love.update(dt)
                     table.remove(lava_table, k)
                 end
             end
-            for k,v in pairs(tree_table) do
-
-            end
+            --for k,v in pairs(tree_table) do
+            --end
 
             -- Spread Lava
             function Spread_Lava()
@@ -741,16 +752,12 @@ function love.update(dt)
                             if board.grid[y][x] == "water" then
                                 water_lava = spread(board.grid,x,y,"lava")
                                 if math.random() < any_lava/500 then
-                                    board.grid[y][x] = "lava"
                                     table.insert(lava_table, Lava:Create(x,y))
                                 end
                             elseif math.random() < any_lava/500 then
                                 if math.random() < 0.1 then
-                                    board.grid[y][x] = "lava"
                                     table.insert(stone_table, Stone:Create(x,y))
-                                    board.grid[y][x] = "stone"
                                 else
-                                    board.grid[y][x] = "lava"
                                     table.insert(lava_table, Lava:Create(x,y))
                                 end
                             end
@@ -764,8 +771,16 @@ function love.update(dt)
             if math.random() < 1/100 then
                 x = math.random(5, gridXCount - 5)
                 y = math.random(5, gridYCount - 5)
-                board.grid[y][x] = "lava"
                 table.insert(lava_table, Lava:Create(x,y))
+            end
+
+            -- Add a Tree
+            if math.random() < 1/10 then
+                x = math.random(5, gridXCount - 5)
+                y = math.random(5, gridYCount - 5)
+                if board.grid[y][x] == "grass" then
+                    table.insert(tree_table, Tree:Create(x,y))
+                end
             end
 
             -- Move and Age Woodchucks
@@ -785,6 +800,10 @@ function love.update(dt)
                     if love.keyboard.isDown( "up" )
                     and stone.y > 3 then
                         stone.y = player.y - 2
+                        if board.grid[stone.y][stone.x] == "water" then
+                            table.remove(stone_table, k)
+                            table.insert(dirt_table, Dirt:Create(stone.x, stone.y))
+                        end
                     end
                 end
                 if stone.x == player.x
@@ -792,6 +811,10 @@ function love.update(dt)
                     if love.keyboard.isDown( "down" )
                     and stone.y < gridYCount - 2 then
                         stone.y = player.y + 2
+                        if board.grid[stone.y][stone.x] == "water" then
+                            table.remove(stone_table, k)
+                            table.insert(dirt_table, Dirt:Create(stone.x, stone.y))
+                        end
                     end
                 end
                 if stone.x == player.x - 1
@@ -799,6 +822,10 @@ function love.update(dt)
                     if love.keyboard.isDown( "left" )
                     and stone.x > 3 then
                         stone.x = player.x - 2
+                        if board.grid[stone.y][stone.x] == "water" then
+                            table.remove(stone_table, k)
+                            table.insert(dirt_table, Dirt:Create(stone.x, stone.y))
+                        end
                     end
                 end
                 if stone.x == player.x + 1
@@ -806,6 +833,10 @@ function love.update(dt)
                     if love.keyboard.isDown( "right" )
                     and stone.x < gridXCount - 2 then
                         stone.x = player.x + 2
+                        if board.grid[stone.y][stone.x] == "water" then
+                            table.remove(stone_table, k)
+                            table.insert(dirt_table, Dirt:Create(stone.x, stone.y))
+                        end
                     end
                 end
             end
