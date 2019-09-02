@@ -241,28 +241,28 @@ function love.load()
         if math.random() < 0.5 then
             direction = math.floor(math.random()*5)
             if direction == 1
-            and player.y > 2
+            and self.y > 2
             and board.grid[self.y - 1][self.x] ~= "water"
             and board.grid[self.y - 1][self.x] ~= "lava"
             and (board.grid[self.y - 1][self.x] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
                 self.y = self.y - 1
             end
             if direction == 2
-            and player.y > 2
+            and self.y > 2
             and board.grid[self.y + 1][self.x] ~= "water"
             and board.grid[self.y + 1][self.x] ~= "lava"
             and (board.grid[self.y + 1][self.x] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
                 self.y = self.y + 1
             end
             if direction == 3
-            and player.y > 2
+            and self.y > 2
             and board.grid[self.y][self.x - 1] ~= "water"
             and board.grid[self.y][self.x - 1] ~= "lava"
             and (board.grid[self.y][self.x - 1] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
                 self.x = self.x - 1
             end
             if direction == 4
-            and player.y > 2
+            and self.y > 2
             and board.grid[self.y - 1][self.x + 1] ~= "water"
             and board.grid[self.y - 1][self.x + 1] ~= "lava"
             and (board.grid[self.y - 1][self.x + 1] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
@@ -664,7 +664,7 @@ function love.update(dt)
                     table.remove(woodchuck_table, k)
                 end
             end
-            
+
 
             -- Update Board
             for k,v in pairs(water_table) do
