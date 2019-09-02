@@ -658,6 +658,13 @@ function love.update(dt)
             -- Handle Game Speed
             timer = timer - timerLimit
             player:Drown()
+            for k,v in pairs(woodchuck_table) do
+                v:Drown()
+                if v.alive == false then
+                    table.remove(woodchuck_table, k)
+                end
+            end
+            
 
             -- Update Board
             for k,v in pairs(water_table) do
