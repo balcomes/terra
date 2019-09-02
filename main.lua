@@ -938,5 +938,11 @@ function love.keypressed(key)
         timerLimit = timerLimit - 0.005
     elseif key == 'e' then
         timerLimit = 0.1
+    elseif key == 'z' then
+        for k,v in pairs(woodchuck_table) do
+            if math.random() < 0.5 then
+                v.alive = false
+            end
+        end
     end
 end
