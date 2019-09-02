@@ -225,6 +225,7 @@ function love.load()
             name = RandomVariable(9),
             alive = true,
             fertile = true,
+            age = 1,
         }
         setmetatable(this, Woodchuck)
         return this
@@ -760,16 +761,21 @@ function love.update(dt)
             Spread_Lava()
 
             -- Add a Volcano
-            if math.random() < 1/10 then
+            if math.random() < 1/100 then
                 x = math.random(5, gridXCount - 5)
                 y = math.random(5, gridYCount - 5)
                 board.grid[y][x] = "lava"
                 table.insert(lava_table, Lava:Create(x,y))
             end
 
-            -- Move Woodchucks
+            -- Move and Age Woodchucks
             for k,v in pairs(woodchuck_table) do
                 v:Move()
+                v.age = v.age + 1
+                if v.age > 2000 then
+                    table.remove(woodchuck_table, k)
+                end
+
             end
 
             -- Push Stone
