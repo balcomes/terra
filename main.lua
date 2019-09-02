@@ -65,6 +65,55 @@ function love.load()
         )
     end
 
+    -- Player Drawing Function
+    function drawPlayer(x, y)
+        -- Hat
+        love.graphics.setColor(1, 0, 1)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize,
+            (y - 1) * cellSize,
+            cellSize - 1,
+            cellSize/3 - 1
+        )
+        -- Face
+        love.graphics.setColor(.8, .8, .8)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize,
+            (y - 1) * cellSize + cellSize/3,
+            cellSize - 1,
+            cellSize/3 - 1
+        )
+        -- Eyes
+        love.graphics.setColor(.1, .1, .1)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize + cellSize/5,
+            (y - 1) * cellSize + cellSize/3,
+            cellSize - 1 - 4*cellSize/5,
+            cellSize/4 - 1
+        )
+        -- Eyes
+        love.graphics.setColor(.1, .1, .1)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize + 3*cellSize/5,
+            (y - 1) * cellSize + cellSize/3,
+            cellSize - 1 - 4*cellSize/5,
+            cellSize/4 - 1
+        )
+        -- Pants
+        love.graphics.setColor(.1, .2, .8)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize,
+            (y - 1) * cellSize + 2*cellSize/3,
+            cellSize - 1,
+            cellSize/3 - 1
+        )
+    end
+
     -- Respawn Player
     function reset()
         player = Player:Create()
@@ -95,7 +144,7 @@ function love.load()
     -- Player Animate
     function Player:Animate()
         love.graphics.setColor(self.c1, self.c2, self.c3)
-        drawCell(self.x, self.y)
+        drawPlayer(self.x, self.y)
     end
 
     -- Player Drown
@@ -107,11 +156,6 @@ function love.load()
                 self.alive = false
         end
     end
-
-    -- Trample Grass
-    --if self.grid[player.y][player.x] == "grass" then
-    --    self.grid[player.y][player.x] = "dirt"
-    --end
 
 --------------------------------------------------------------------------------
 -- Water
@@ -125,17 +169,30 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = 100/255, 100/255,
-            c2 = 100/255,
-            c3 = math.random(200/255,255/255),
+            c1 = math.random()/4,
+            c2 = math.random()/4,
+            c3 = math.random()/2 + 0.5,
+            blink = true,
         }
         setmetatable(this, Water)
         return this
     end
 
+    -- Water Blink
+    function Water:Blink()
+        if math.random() < 0.01 then
+            self.c1 = math.random()/4
+            self.c2 = math.random()/4
+            self.c3 = math.random()/2 + 0.5
+        end
+    end
+
     -- Water Animate
     function Water:Animate()
         love.graphics.setColor(self.c1, self.c2, self.c3)
+        if self.blink == true then
+            self:Blink()
+        end
         drawCell(self.x, self.y)
     end
 
@@ -228,6 +285,18 @@ function love.load()
         return result
     end
 
+    -- Sand to Dirt
+    function Sand:Sand_to_Dirt()
+        local result = false
+        sand_grass = spread(board.grid, self.x, self.y, "grass")
+        if math.random() < sand_grass/2000 then
+            board.grid[self.y][self.x] = "dirt"
+            table.insert(dirt_table, Dirt:Create(self.x, self.y))
+            result = true
+        end
+        return result
+    end
+
 --------------------------------------------------------------------------------
 -- Grass
 --------------------------------------------------------------------------------
@@ -291,7 +360,6 @@ function love.load()
             c1 = math.random(200/255,255/255),
             c2 = 100/255,
             c3 = 100/255,
-            conc = c,
             blink = true,
         }
         setmetatable(this, Lava)
@@ -317,7 +385,7 @@ function love.load()
     -- Lava to Dirt
     function Lava:Lava_to_Dirt()
         local result = false
-        if math.random() < 0.1 then
+        if math.random() < 0.01 then
             board.grid[self.y][self.x] = "dirt"
             table.insert(dirt_table, Dirt:Create(self.x, self.y))
             result = true
@@ -337,9 +405,9 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = 100/255,
-            c2 = 100/255,
-            c3 = 100/255,
+            c1 = 40/255,
+            c2 = 50/255,
+            c3 = 60/255,
         }
         setmetatable(this, Stone)
         return this
@@ -349,6 +417,18 @@ function love.load()
     function Stone:Animate()
         love.graphics.setColor(self.c1, self.c2, self.c3)
         drawCell(self.x, self.y)
+    end
+
+    -- Stone to Sand
+    function Stone:Stone_to_Sand()
+        local result = false
+        stone_water = spread(board.grid,self.x,self.y,"water")
+        if math.random() < stone_water/80 then
+            board.grid[self.y][self.x] = "sand"
+            table.insert(sand_table, Sand:Create(self.x,self.y))
+            result = true
+        end
+        return result
     end
 
 --------------------------------------------------------------------------------
@@ -381,6 +461,7 @@ function love.load()
     -- Tree to Stone
     function Tree:Tree_to_Stone()
         board.grid[self.y][self.x] = "stone"
+        table.insert(dirt_table, Dirt:Create(self.x, self.y))
         table.insert(stone_table, Stone:Create(self.x, self.y))
     end
 
@@ -440,10 +521,6 @@ function love.load()
     Board:Island()
     -- Spawn Player
     reset()
-    -- Add a Volcano
-    table.insert(lava_table, Lava:Create(math.random(5, gridXCount - 5),
-                                         math.random(5, gridYCount - 5),1))
-
 end
 
 --------------------------------------------------------------------------------
@@ -496,6 +573,9 @@ function love.update(dt)
                 if v:Sand_to_Water() then
                     table.remove(sand_table, k)
                 end
+                if v:Sand_to_Dirt() then
+                    table.remove(sand_table, k)
+                end
             end
             for k,v in pairs(grass_table) do
                 if v:Grass_to_Tree() then
@@ -506,42 +586,83 @@ function love.update(dt)
                 end
             end
             for k,v in pairs(stone_table) do
-
+                if v:Stone_to_Sand() then
+                    table.remove(stone_table, k)
+                end
             end
             for k,v in pairs(lava_table) do
-
+                if v:Lava_to_Dirt() then
+                    table.remove(lava_table, k)
+                end
             end
             for k,v in pairs(tree_table) do
 
             end
 
-            -- Plug with Stone
-            for k,v in pairs(stone_table) do
-                if board.grid[v.y][v.x] == "water" then
-                    board.grid[v.y][v.x] = "dirt"
-                    table.remove(stone_table,k)
+            -- Spread Lava
+            function Spread_Lava()
+                for y = 2, gridYCount - 1 do
+                    for x = 2, gridXCount -1 do
+                        if board.grid[y][x] ~= "stone" or board.grid[y][x] ~= "lava" then
+                            any_lava = spread(board.grid,x,y,"lava")
+                            if board.grid[y][x] == "water" then
+                                water_lava = spread(board.grid,x,y,"lava")
+                                if math.random() < any_lava/500 then
+                                    board.grid[y][x] = "lava"
+                                    table.insert(lava_table, Lava:Create(x,y))
+                                end
+                            elseif math.random() < any_lava/500 then
+                                if math.random() < 0.1 then
+                                    board.grid[y][x] = "lava"
+                                    table.insert(stone_table, Stone:Create(x,y))
+                                    board.grid[y][x] = "stone"
+                                else
+                                    board.grid[y][x] = "lava"
+                                    table.insert(lava_table, Lava:Create(x,y))
+                                end
+                            end
+                        end
+                    end
                 end
+            end
+            Spread_Lava()
+
+            -- Add a Volcano
+            if math.random() < 1/10 then
+                x = math.random(5, gridXCount - 5)
+                y = math.random(5, gridYCount - 5)
+                board.grid[y][x] = "lava"
+                table.insert(lava_table, Lava:Create(x,y))
             end
 
             -- Push Stone
             for k,stone in pairs(stone_table) do
                 if stone.x == player.x
-                and stone.y == player.y then
+                and stone.y == player.y - 1 then
                     if love.keyboard.isDown( "up" )
                     and stone.y > 3 then
-                        stone.y = stone.y - 1
+                        stone.y = player.y - 2
                     end
+                end
+                if stone.x == player.x
+                and stone.y == player.y + 1 then
                     if love.keyboard.isDown( "down" )
                     and stone.y < gridYCount - 2 then
-                        stone.y = stone.y + 1
+                        stone.y = player.y + 2
                     end
+                end
+                if stone.x == player.x - 1
+                and stone.y == player.y then
                     if love.keyboard.isDown( "left" )
                     and stone.x > 3 then
-                        stone.x = stone.x - 1
+                        stone.x = player.x - 2
                     end
+                end
+                if stone.x == player.x + 1
+                and stone.y == player.y then
                     if love.keyboard.isDown( "right" )
                     and stone.x < gridXCount - 2 then
-                        stone.x = stone.x + 1
+                        stone.x = player.x + 2
                     end
                 end
             end
