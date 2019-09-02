@@ -11,6 +11,7 @@ function love.load()
     stone_table = {}
     lava_table = {}
     tree_table = {}
+    woodchuck_table = {}
 
     gridXCount = math.floor(love.graphics.getWidth()/cellSize + 0.5)
     gridYCount = math.floor(love.graphics.getHeight()/cellSize + 0.5)
@@ -114,6 +115,55 @@ function love.load()
         )
     end
 
+    -- Woodchuck Drawing Function
+    function drawWoodchuck(x, y)
+        -- Hat
+        love.graphics.setColor(.5, .5, .1)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize,
+            (y - 1) * cellSize,
+            cellSize - 1,
+            cellSize/3 - 1
+        )
+        -- Face
+        love.graphics.setColor(.7, .7, .1)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize,
+            (y - 1) * cellSize + cellSize/3,
+            cellSize - 1,
+            cellSize/3 - 1
+        )
+        -- Eyes
+        love.graphics.setColor(.1, .1, .1)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize + cellSize/5,
+            (y - 1) * cellSize + cellSize/3,
+            cellSize - 1 - 4*cellSize/5,
+            cellSize/4 - 1
+        )
+        -- Eyes
+        love.graphics.setColor(.1, .1, .1)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize + 3*cellSize/5,
+            (y - 1) * cellSize + cellSize/3,
+            cellSize - 1 - 4*cellSize/5,
+            cellSize/4 - 1
+        )
+        -- Pants
+        love.graphics.setColor(.5, .5, .1)
+        love.graphics.rectangle(
+            'fill',
+            (x - 1) * cellSize,
+            (y - 1) * cellSize + 2*cellSize/3,
+            cellSize - 1,
+            cellSize/3 - 1
+        )
+    end
+
     -- Respawn Player
     function reset()
         player = Player:Create()
@@ -149,6 +199,80 @@ function love.load()
 
     -- Player Drown
     function Player:Drown()
+        if board.grid[self.y-1][self.x] == "water"
+            and board.grid[self.y][self.x-1] == "water"
+            and board.grid[self.y][self.x+1] == "water"
+            and board.grid[self.y+1][self.x] == "water" then
+                self.alive = false
+        end
+    end
+
+    --------------------------------------------------------------------------------
+    -- Woodchuck
+    --------------------------------------------------------------------------------
+
+    -- Woodchuck Class
+    Woodchuck = {}
+    Woodchuck.__index = Woodchuck
+    function Woodchuck:Create(xo, yo)
+        local this =
+        {
+            x = xo,
+            y = yo,
+            c1 = 0,
+            c2 = 0,
+            c3 = 0,
+            name = RandomVariable(9),
+            alive = true,
+            fertile = true,
+        }
+        setmetatable(this, Woodchuck)
+        return this
+    end
+
+    -- Woodchuck Animate
+    function Woodchuck:Animate()
+        love.graphics.setColor(self.c1, self.c2, self.c3)
+        drawWoodchuck(self.x, self.y)
+    end
+
+    -- Woodchuck Move
+    function Woodchuck:Move()
+        if math.random() < 0.5 then
+            direction = math.floor(math.random()*5)
+            if direction == 1
+            and player.y > 2
+            and board.grid[self.y - 1][self.x] ~= "water"
+            and board.grid[self.y - 1][self.x] ~= "lava"
+            and (board.grid[self.y - 1][self.x] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
+                self.y = self.y - 1
+            end
+            if direction == 2
+            and player.y > 2
+            and board.grid[self.y + 1][self.x] ~= "water"
+            and board.grid[self.y + 1][self.x] ~= "lava"
+            and (board.grid[self.y + 1][self.x] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
+                self.y = self.y + 1
+            end
+            if direction == 3
+            and player.y > 2
+            and board.grid[self.y][self.x - 1] ~= "water"
+            and board.grid[self.y][self.x - 1] ~= "lava"
+            and (board.grid[self.y][self.x - 1] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
+                self.x = self.x - 1
+            end
+            if direction == 4
+            and player.y > 2
+            and board.grid[self.y - 1][self.x + 1] ~= "water"
+            and board.grid[self.y - 1][self.x + 1] ~= "lava"
+            and (board.grid[self.y - 1][self.x + 1] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
+                self.x = self.x + 1
+            end
+        end
+    end
+
+    -- Woodchuck Drown
+    function Woodchuck:Drown()
         if board.grid[self.y-1][self.x] == "water"
             and board.grid[self.y][self.x-1] == "water"
             and board.grid[self.y][self.x+1] == "water"
@@ -346,6 +470,40 @@ function love.load()
         return result
     end
 
+    --------------------------------------------------------------------------------
+    -- Tree
+    --------------------------------------------------------------------------------
+
+    -- Tree Class
+    Tree = {}
+    Tree.__index = Tree
+    function Tree:Create(xo,yo)
+        local this =
+        {
+            x = xo,
+            y = yo,
+            c1 = 10/255,
+            c2 = 100/255,
+            c3 = 10/255,
+            hp = 10,
+        }
+        setmetatable(this, Tree)
+        return this
+    end
+
+    -- Tree Animate
+    function Tree:Animate()
+        love.graphics.setColor(self.c1, self.c2, self.c3)
+        drawCell(self.x, self.y)
+    end
+
+    -- Tree to Stone
+    function Tree:Tree_to_Stone()
+        board.grid[self.y][self.x] = "stone"
+        table.insert(dirt_table, Dirt:Create(self.x, self.y))
+        table.insert(stone_table, Stone:Create(self.x, self.y))
+    end
+
 --------------------------------------------------------------------------------
 -- Lava
 --------------------------------------------------------------------------------
@@ -419,50 +577,16 @@ function love.load()
         drawCell(self.x, self.y)
     end
 
-    -- Stone to Sand
-    function Stone:Stone_to_Sand()
+    -- Stone to Dirt
+    function Stone:Stone_to_Dirt()
         local result = false
         stone_water = spread(board.grid,self.x,self.y,"water")
         if math.random() < stone_water/80 then
-            board.grid[self.y][self.x] = "sand"
-            table.insert(sand_table, Sand:Create(self.x,self.y))
+            board.grid[self.y][self.x] = "dirt"
+            table.insert(dirt_table, Dirt:Create(self.x,self.y))
             result = true
         end
         return result
-    end
-
---------------------------------------------------------------------------------
--- Tree
---------------------------------------------------------------------------------
-
-    -- Tree Class
-    Tree = {}
-    Tree.__index = Tree
-    function Tree:Create(xo,yo)
-        local this =
-        {
-            x = xo,
-            y = yo,
-            c1 = 10/255,
-            c2 = 100/255,
-            c3 = 10/255,
-            hp = 10,
-        }
-        setmetatable(this, Tree)
-        return this
-    end
-
-    -- Tree Animate
-    function Tree:Animate()
-        love.graphics.setColor(self.c1, self.c2, self.c3)
-        drawCell(self.x, self.y)
-    end
-
-    -- Tree to Stone
-    function Tree:Tree_to_Stone()
-        board.grid[self.y][self.x] = "stone"
-        table.insert(dirt_table, Dirt:Create(self.x, self.y))
-        table.insert(stone_table, Stone:Create(self.x, self.y))
     end
 
 --------------------------------------------------------------------------------
@@ -519,6 +643,7 @@ function love.load()
     board = Board:Create()
     Board:Ocean()
     Board:Island()
+    table.insert(woodchuck_table,Woodchuck:Create(math.floor(gridXCount/2) - 1, math.floor(gridYCount/2 - 1)))
     -- Spawn Player
     reset()
 end
@@ -586,7 +711,7 @@ function love.update(dt)
                 end
             end
             for k,v in pairs(stone_table) do
-                if v:Stone_to_Sand() then
+                if v:Stone_to_Dirt() then
                     table.remove(stone_table, k)
                 end
             end
@@ -635,6 +760,11 @@ function love.update(dt)
                 table.insert(lava_table, Lava:Create(x,y))
             end
 
+            -- Move Woodchucks
+            for k,v in pairs(woodchuck_table) do
+                v:Move()
+            end
+
             -- Push Stone
             for k,stone in pairs(stone_table) do
                 if stone.x == player.x
@@ -663,6 +793,26 @@ function love.update(dt)
                     if love.keyboard.isDown( "right" )
                     and stone.x < gridXCount - 2 then
                         stone.x = player.x + 2
+                    end
+                end
+            end
+
+            -- Eat Tree
+            for kt,tree in pairs(tree_table) do
+                for kw,wc in pairs(woodchuck_table) do
+                    if wc.x == tree.x and wc.y == tree.y then
+                        tree.hp = tree.hp - 1
+                        if tree.hp < 1 then
+                            tree:Tree_to_Stone()
+                            table.remove(tree_table, k)
+                            if wc.fertile == true then
+                                wc.fertile = false
+                                table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
+                                if math.random() < 0.1 then
+                                    table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
+                                end
+                            break end
+                        end
                     end
                 end
             end
@@ -757,6 +907,9 @@ function love.draw()
         v:Animate()
     end
     for k,v in pairs(tree_table) do
+        v:Animate()
+    end
+    for k,v in pairs(woodchuck_table) do
         v:Animate()
     end
     player:Animate()
