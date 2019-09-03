@@ -12,6 +12,8 @@ function love.load()
     lava_table = {}
     tree_table = {}
     woodchuck_table = {}
+    reverse_seasons = false
+    adjust = 0
 
     gridXCount = math.floor(love.graphics.getWidth()/cellSize + 0.5)
     gridYCount = math.floor(love.graphics.getHeight()/cellSize + 0.5)
@@ -415,10 +417,12 @@ function love.load()
     -- Dirt to Sand
     function Dirt:Dirt_to_Sand()
         local result = false
-        local dirt_water = spread(board.grid,self.x,self.y,"water")
-        if math.random() < dirt_water/80 then
-            table.insert(sand_table, Sand:Create(self.x,self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local dirt_water = spread(board.grid,self.x,self.y,"water")
+            if math.random() < dirt_water/1000 then
+                table.insert(sand_table, Sand:Create(self.x,self.y))
+                result = true
+            end
         end
         return result
     end
@@ -426,10 +430,12 @@ function love.load()
     -- Dirt to Grass
     function Dirt:Dirt_to_Grass()
         local result = false
-        local dirt_grass = spread(board.grid, self.x, self.y, "grass")
-        if math.random() < dirt_grass/2000 + 0.001 then
-            table.insert(grass_table, Grass:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local dirt_grass = spread(board.grid, self.x, self.y, "grass")
+            if math.random() < dirt_grass/2000 + 0.001 then
+                table.insert(grass_table, Grass:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -437,10 +443,12 @@ function love.load()
     -- Dirt to Lava
     function Dirt:Dirt_to_Lava()
         local result = false
-        local dirt_lava = spread(board.grid, self.x, self.y, "lava")
-        if math.random() < dirt_lava/600 then
-            table.insert(lava_table, Lava:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local dirt_lava = spread(board.grid, self.x, self.y, "lava")
+            if math.random() < dirt_lava/1000 then
+                table.insert(lava_table, Lava:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -475,10 +483,12 @@ function love.load()
     -- Sand to Water
     function Sand:Sand_to_Water()
         local result = false
-        local sand_water = spread(board.grid, self.x, self.y, "water")
-        if math.random() < sand_water/2000 then
-            table.insert(water_table, Water:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local sand_water = spread(board.grid, self.x, self.y, "water")
+            if math.random() < sand_water/3000 then
+                table.insert(water_table, Water:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -486,10 +496,12 @@ function love.load()
     -- Sand to Dirt
     function Sand:Sand_to_Dirt()
         local result = false
-        local sand_grass = spread(board.grid, self.x, self.y, "grass")
-        if math.random() < sand_grass/600 then
-            table.insert(dirt_table, Dirt:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local sand_grass = spread(board.grid, self.x, self.y, "grass")
+            if math.random() < sand_grass/600 then
+                table.insert(dirt_table, Dirt:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -497,10 +509,12 @@ function love.load()
     -- Sand to Lava
     function Sand:Sand_to_Lava()
         local result = false
-        local sand_lava = spread(board.grid, self.x, self.y, "lava")
-        if math.random() < sand_lava/600 then
-            table.insert(lava_table, Lava:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local sand_lava = spread(board.grid, self.x, self.y, "lava")
+            if math.random() < sand_lava/900 then
+                table.insert(lava_table, Lava:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -517,9 +531,9 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = 80/255,
-            c2 = 150/255,
-            c3 = 60/255,
+            c1 = 80/255 + adjust,
+            c2 = 150/255 + adjust,
+            c3 = 60/255 + adjust,
         }
         setmetatable(this, Grass)
         board.grid[yo][xo] = "grass"
@@ -535,10 +549,12 @@ function love.load()
     -- Grass to Tree
     function Grass:Grass_to_Tree()
         local result = false
-        local grass_tree = spread(board.grid, self.x, self.y, "tree")
-        if math.random() < grass_tree/2000 then
-            table.insert(tree_table, Tree:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local grass_tree = spread(board.grid, self.x, self.y, "tree")
+            if math.random() < grass_tree/2000 then
+                table.insert(tree_table, Tree:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -546,9 +562,11 @@ function love.load()
     -- Grass to Dirt (Player Trample)
     function Grass:Grass_to_Dirt_via_Player()
         local result = false
-        if self.x == player.x and self.y == player.y then
-            table.insert(dirt_table, Dirt:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            if self.x == player.x and self.y == player.y then
+                table.insert(dirt_table, Dirt:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -556,10 +574,12 @@ function love.load()
     -- Grass to Dirt (Next to Water)
     function Grass:Grass_to_Dirt_via_Water()
         local result = false
-        local grass_water = spread(board.grid, self.x, self.y, "water")
-        if math.random() < grass_water/100 then
-            table.insert(dirt_table, Dirt:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local grass_water = spread(board.grid, self.x, self.y, "water")
+            if math.random() < grass_water/100 then
+                table.insert(dirt_table, Dirt:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -567,10 +587,12 @@ function love.load()
     -- Grass to Lava
     function Grass:Grass_to_Lava()
         local result = false
-        local grass_lava = spread(board.grid, self.x, self.y, "lava")
-        if math.random() < grass_lava/700 then
-            table.insert(lava_table, Lava:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local grass_lava = spread(board.grid, self.x, self.y, "lava")
+            if math.random() < grass_lava/1100 then
+                table.insert(lava_table, Lava:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -587,9 +609,9 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = (20 + math.random(50))/255,
-            c2 = (80 + math.random(50))/255,
-            c3 = (20 + math.random(10))/255,
+            c1 = (20 + math.random(50))/255 + adjust,
+            c2 = (80 + math.random(50))/255 + adjust,
+            c3 = (20 + math.random(10))/255 + adjust,
             hp = 10,
         }
         setmetatable(this, Tree)
@@ -605,22 +627,28 @@ function love.load()
 
     -- Tree to Stone
     function Tree:Tree_to_Stone()
-        table.insert(dirt_table, Dirt:Create(self.x, self.y))
-        table.insert(stone_table, Stone:Create(self.x, self.y))
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            table.insert(dirt_table, Dirt:Create(self.x, self.y))
+            table.insert(stone_table, Stone:Create(self.x, self.y))
+        end
     end
 
     -- Tree to Dirt
     function Tree:Tree_to_Dirt()
-        table.insert(dirt_table, Dirt:Create(self.x, self.y))
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            table.insert(dirt_table, Dirt:Create(self.x, self.y))
+        end
     end
 
     -- Tree to Lava
     function Tree:Tree_to_Lava()
         local result = false
-        local tree_lava = spread(board.grid, self.x, self.y, "lava")
-        if math.random() < tree_lava/800 then
-            table.insert(lava_table, Lava:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local tree_lava = spread(board.grid, self.x, self.y, "lava")
+            if math.random() < tree_lava/1200 then
+                table.insert(lava_table, Lava:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -665,9 +693,11 @@ function love.load()
     -- Lava to Dirt
     function Lava:Lava_to_Dirt()
         local result = false
-        if math.random() < 0.01 then
-            table.insert(dirt_table, Dirt:Create(self.x, self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            if math.random() < 0.01 then
+                table.insert(dirt_table, Dirt:Create(self.x, self.y))
+                result = true
+            end
         end
         return result
     end
@@ -702,10 +732,12 @@ function love.load()
     -- Stone to Dirt
     function Stone:Stone_to_Dirt()
         local result = false
-        local stone_water = spread(board.grid,self.x,self.y,"water")
-        if math.random() < stone_water/80 then
-            table.insert(dirt_table, Dirt:Create(self.x,self.y))
-            result = true
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local stone_water = spread(board.grid,self.x,self.y,"water")
+            if math.random() < stone_water/80 then
+                table.insert(dirt_table, Dirt:Create(self.x,self.y))
+                result = true
+            end
         end
         return result
     end
@@ -796,19 +828,38 @@ function love.update(dt)
                 end
             end
 
-            if math.random() < 0.1 then
-                for k,v in pairs(grass_table) do
-                    v.c1 = v.c1 + 1/255
-                    v.c2 = v.c2 + 1/255
-                    v.c3 = v.c3 + 1/255
+            if reverse_seasons == false then
+                adjust = 1/255
+            else
+                adjust = -1/255
+            end
+
+            for k,v in pairs(grass_table) do
+                if math.random() < 0.1 then
+                    v.c1 = v.c1 + adjust
+                    v.c2 = v.c2 + adjust
+                    v.c3 = v.c3 + adjust
+                end
+                if (v.c1 + v.c2 + v.c3)/3 > 0.98 then
+                    reverse_seasons = true
+                end
+                if (v.c1 + v.c2 + v.c3)/3 < 0.02 then
+                    reverse_seasons = false
                 end
             end
 
-            if math.random() < 0.1 then
-                for k,v in pairs(tree_table) do
-                    v.c1 = v.c1 + 1/255
-                    v.c2 = v.c2 + 1/255
-                    v.c3 = v.c3 + 1/255
+            for k,v in pairs(tree_table) do
+                if math.random() < 0.1 then
+                    v.c1 = v.c1 + adjust
+                    v.c2 = v.c2 + adjust
+                    v.c3 = v.c3 + adjust
+                end
+
+                if (v.c1 + v.c2 + v.c3)/3 > 0.98 then
+                    reverse_seasons = true
+                end
+                if (v.c1 + v.c2 + v.c3)/3 < 0.02 then
+                    reverse_seasons = false
                 end
             end
 
@@ -820,7 +871,7 @@ function love.update(dt)
             end
 
             -- Add a Tree
-            if math.random() < 1/10 then
+            if math.random() < 0.2 then
                 x = math.random(5, gridXCount - 5)
                 y = math.random(5, gridYCount - 5)
                 if board.grid[y][x] == "grass" then
@@ -873,19 +924,28 @@ function love.update(dt)
             -- Eat Tree
             for kt,tree in pairs(tree_table) do
                 for kw,wc in pairs(woodchuck_table) do
-                    if wc.x == tree.x and wc.y == tree.y then
+                    if wc.x == tree.x and wc.y == tree.y and wc.fertile == true then
                         tree:Tree_to_Dirt()
                         table.remove(tree_table, kt)
-                        if wc.fertile == true then
-                            if math.random() < 0.2 then
-                                wc.fertile = false
-                                table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
-                            end
-                            if math.random() < 0.2 then
-                                wc.fertile = false
-                                table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
-                            end
-                        break end
+                        if math.random() < 0.4 then
+                            wc.fertile = false
+                            table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
+                        end
+                        if math.random() < 0.2 then
+                            wc.fertile = false
+                            table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
+                        end
+                    break end
+                end
+            end
+
+            -- Woodchuck Suicide in Lava
+            for kt,lava in pairs(lava_table) do
+                for kw,wc in pairs(woodchuck_table) do
+                    if wc.x == lava.x and wc.y == lava.y and wc.fertile == false then
+                        table.insert(dirt_table, Dirt:Create(lava.x, lava.y))
+                        table.remove(lava_table,kt)
+                        table.remove(woodchuck_table,kw)
                     end
                 end
             end
