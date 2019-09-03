@@ -463,7 +463,7 @@ function love.load()
     function Sand:Sand_to_Dirt()
         local result = false
         sand_grass = spread(board.grid, self.x, self.y, "grass")
-        if math.random() < sand_grass/2000 then
+        if math.random() < sand_grass/200 then
             table.insert(dirt_table, Dirt:Create(self.x, self.y))
             result = true
         end
@@ -756,10 +756,10 @@ function love.update(dt)
                             any_lava = spread(board.grid,x,y,"lava")
                             if board.grid[y][x] == "water" then
                                 water_lava = spread(board.grid,x,y,"lava")
-                                if math.random() < any_lava/500 then
+                                if math.random() < any_lava/300 then
                                     table.insert(lava_table, Lava:Create(x,y))
                                 end
-                            elseif math.random() < any_lava/500 then
+                            elseif math.random() < any_lava/300 then
                                 if math.random() < 0.1 then
                                     table.insert(stone_table, Stone:Create(x,y))
                                 else
