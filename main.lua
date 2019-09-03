@@ -796,6 +796,22 @@ function love.update(dt)
                 end
             end
 
+            if math.random() < 0.1 then
+                for k,v in pairs(grass_table) do
+                    v.c1 = v.c1 + 1/255
+                    v.c2 = v.c2 + 1/255
+                    v.c3 = v.c3 + 1/255
+                end
+            end
+
+            if math.random() < 0.1 then
+                for k,v in pairs(tree_table) do
+                    v.c1 = v.c1 + 1/255
+                    v.c2 = v.c2 + 1/255
+                    v.c3 = v.c3 + 1/255
+                end
+            end
+
             -- Add a Volcano
             if math.random() < 1/100 then
                 x = math.random(5, gridXCount - 5)
