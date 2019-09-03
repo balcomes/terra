@@ -73,9 +73,9 @@ function love.load()
         love.graphics.rectangle(
             'fill',
             (x - 1) * cellSize,
-            (y - 1) * cellSize,
+            (y - 1) * cellSize + 1,
             cellSize - 1,
-            cellSize/3 - 1
+            cellSize/3
         )
         -- Face
         love.graphics.setColor(.8, .8, .8)
@@ -84,7 +84,7 @@ function love.load()
             (x - 1) * cellSize,
             (y - 1) * cellSize + cellSize/3,
             cellSize - 1,
-            cellSize/3 - 1
+            cellSize/3
         )
         -- Eyes
         love.graphics.setColor(.1, .1, .1)
@@ -118,22 +118,22 @@ function love.load()
     -- Woodchuck Drawing Function
     function drawWoodchuck(x, y)
         -- Hat
-        love.graphics.setColor(.5, .5, .1)
+        love.graphics.setColor(.5, .4, .3)
         love.graphics.rectangle(
             'fill',
             (x - 1) * cellSize,
-            (y - 1) * cellSize,
+            (y - 1) * cellSize + 1,
             cellSize - 1,
-            cellSize/3 - 1
+            cellSize/3
         )
         -- Face
-        love.graphics.setColor(.7, .7, .1)
+        love.graphics.setColor(.7, .6, .6)
         love.graphics.rectangle(
             'fill',
             (x - 1) * cellSize,
             (y - 1) * cellSize + cellSize/3,
             cellSize - 1,
-            cellSize/3 - 1
+            cellSize/3
         )
         -- Eyes
         love.graphics.setColor(.1, .1, .1)
@@ -141,8 +141,8 @@ function love.load()
             'fill',
             (x - 1) * cellSize + cellSize/5,
             (y - 1) * cellSize + cellSize/3,
-            cellSize - 1 - 4*cellSize/5,
-            cellSize/4 - 1
+            cellSize - 4*cellSize/5 - 1,
+            cellSize/4
         )
         -- Eyes
         love.graphics.setColor(.1, .1, .1)
@@ -150,11 +150,11 @@ function love.load()
             'fill',
             (x - 1) * cellSize + 3*cellSize/5,
             (y - 1) * cellSize + cellSize/3,
-            cellSize - 1 - 4*cellSize/5,
-            cellSize/4 - 1
+            cellSize - 4*cellSize/5 - 1,
+            cellSize/4
         )
         -- Pants
-        love.graphics.setColor(.5, .5, .1)
+        love.graphics.setColor(.5, .4, .3)
         love.graphics.rectangle(
             'fill',
             (x - 1) * cellSize,
@@ -433,9 +433,9 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = 180/255,
-            c2 = 180/255,
-            c3 = 170/255,
+            c1 = 190/255,
+            c2 = 190/255,
+            c3 = 160/255,
         }
         setmetatable(this, Sand)
         board.grid[yo][xo] = "sand"
@@ -482,8 +482,8 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = 50/255,
-            c2 = 170/255,
+            c1 = 80/255,
+            c2 = 150/255,
             c3 = 60/255,
         }
         setmetatable(this, Grass)
@@ -541,9 +541,9 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = 10/255,
-            c2 = 100/255,
-            c3 = 10/255,
+            c1 = (20 + math.random(50))/255,
+            c2 = (80 + math.random(50))/255,
+            c3 = (20 + math.random(10))/255,
             hp = 10,
         }
         setmetatable(this, Tree)
@@ -579,9 +579,9 @@ function love.load()
         {
             x = xo,
             y = yo,
-            c1 = math.random(200/255,255/255),
-            c2 = 100/255,
-            c3 = 100/255,
+            c1 = (150 + math.random(10))/255,
+            c2 = (50 + math.random(10))/255,
+            c3 = (50 + math.random(10))/255,
             blink = true,
         }
         setmetatable(this, Lava)
