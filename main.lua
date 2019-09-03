@@ -563,6 +563,11 @@ function love.load()
         table.insert(stone_table, Stone:Create(self.x, self.y))
     end
 
+    -- Tree to Dirt
+    function Tree:Tree_to_Dirt()
+        table.insert(dirt_table, Dirt:Create(self.x, self.y))
+    end
+
 --------------------------------------------------------------------------------
 -- Lava
 --------------------------------------------------------------------------------
@@ -787,7 +792,7 @@ function love.update(dt)
             for k,v in pairs(woodchuck_table) do
                 v:Move()
                 v.age = v.age + 1
-                if v.age > 2000 then
+                if v.age > 1000 and v.fertile == false then
                     table.remove(woodchuck_table, k)
                 end
 
@@ -800,10 +805,6 @@ function love.update(dt)
                     if love.keyboard.isDown( "up" )
                     and stone.y > 3 then
                         stone.y = player.y - 2
-                        if board.grid[stone.y][stone.x] == "water" then
-                            table.remove(stone_table, k)
-                            table.insert(dirt_table, Dirt:Create(stone.x, stone.y))
-                        end
                     end
                 end
                 if stone.x == player.x
@@ -811,10 +812,6 @@ function love.update(dt)
                     if love.keyboard.isDown( "down" )
                     and stone.y < gridYCount - 2 then
                         stone.y = player.y + 2
-                        if board.grid[stone.y][stone.x] == "water" then
-                            table.remove(stone_table, k)
-                            table.insert(dirt_table, Dirt:Create(stone.x, stone.y))
-                        end
                     end
                 end
                 if stone.x == player.x - 1
@@ -822,10 +819,6 @@ function love.update(dt)
                     if love.keyboard.isDown( "left" )
                     and stone.x > 3 then
                         stone.x = player.x - 2
-                        if board.grid[stone.y][stone.x] == "water" then
-                            table.remove(stone_table, k)
-                            table.insert(dirt_table, Dirt:Create(stone.x, stone.y))
-                        end
                     end
                 end
                 if stone.x == player.x + 1
@@ -833,10 +826,6 @@ function love.update(dt)
                     if love.keyboard.isDown( "right" )
                     and stone.x < gridXCount - 2 then
                         stone.x = player.x + 2
-                        if board.grid[stone.y][stone.x] == "water" then
-                            table.remove(stone_table, k)
-                            table.insert(dirt_table, Dirt:Create(stone.x, stone.y))
-                        end
                     end
                 end
             end
@@ -845,18 +834,18 @@ function love.update(dt)
             for kt,tree in pairs(tree_table) do
                 for kw,wc in pairs(woodchuck_table) do
                     if wc.x == tree.x and wc.y == tree.y then
-                        tree.hp = tree.hp - 1
-                        if tree.hp < 1 then
-                            tree:Tree_to_Stone()
-                            table.remove(tree_table, k)
-                            if wc.fertile == true then
+                        tree:Tree_to_Dirt()
+                        table.remove(tree_table, kt)
+                        if wc.fertile == true then
+                            if math.random() < 0.2 then
                                 wc.fertile = false
                                 table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
-                                if math.random() < 0.1 then
-                                    table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
-                                end
-                            break end
-                        end
+                            end
+                            if math.random() < 0.2 then
+                                wc.fertile = false
+                                table.insert(woodchuck_table,Woodchuck:Create(wc.x,wc.y))
+                            end
+                        break end
                     end
                 end
             end
@@ -971,7 +960,7 @@ function love.keypressed(key)
         timerLimit = 0.1
     elseif key == 'z' then
         for k,v in pairs(woodchuck_table) do
-            if math.random() < 0.2 then
+            if math.random() < 0.5 and v.fertile == true then
                 v.alive = false
             end
         end
