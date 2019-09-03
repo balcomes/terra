@@ -372,6 +372,19 @@ function love.load()
         drawCell(self.x, self.y)
     end
 
+    -- Water to Stone
+    function Water:Water_to_Stone()
+        local result = false
+        if self.x > 1 and self.x < gridXCount and self.y > 1 and self.y < gridYCount then
+            local water_lava = spread(board.grid, self.x ,self.y, "lava")
+            if math.random() < water_lava/20 then
+                table.insert(stone_table, Stone:Create(self.x, self.y))
+                result = true
+            end
+        end
+        return result
+    end
+
 --------------------------------------------------------------------------------
 -- Dirt
 --------------------------------------------------------------------------------
@@ -402,7 +415,7 @@ function love.load()
     -- Dirt to Sand
     function Dirt:Dirt_to_Sand()
         local result = false
-        dirt_water = spread(board.grid,self.x,self.y,"water")
+        local dirt_water = spread(board.grid,self.x,self.y,"water")
         if math.random() < dirt_water/80 then
             table.insert(sand_table, Sand:Create(self.x,self.y))
             result = true
@@ -413,9 +426,20 @@ function love.load()
     -- Dirt to Grass
     function Dirt:Dirt_to_Grass()
         local result = false
-        grass_tree = spread(board.grid, self.x, self.y, "grass")
-        if math.random() < grass_tree/2000 + 0.001 then
+        local dirt_grass = spread(board.grid, self.x, self.y, "grass")
+        if math.random() < dirt_grass/2000 + 0.001 then
             table.insert(grass_table, Grass:Create(self.x, self.y))
+            result = true
+        end
+        return result
+    end
+
+    -- Dirt to Lava
+    function Dirt:Dirt_to_Lava()
+        local result = false
+        local dirt_lava = spread(board.grid, self.x, self.y, "lava")
+        if math.random() < dirt_lava/600 then
+            table.insert(lava_table, Lava:Create(self.x, self.y))
             result = true
         end
         return result
@@ -451,7 +475,7 @@ function love.load()
     -- Sand to Water
     function Sand:Sand_to_Water()
         local result = false
-        sand_water = spread(board.grid, self.x, self.y, "water")
+        local sand_water = spread(board.grid, self.x, self.y, "water")
         if math.random() < sand_water/2000 then
             table.insert(water_table, Water:Create(self.x, self.y))
             result = true
@@ -462,9 +486,20 @@ function love.load()
     -- Sand to Dirt
     function Sand:Sand_to_Dirt()
         local result = false
-        sand_grass = spread(board.grid, self.x, self.y, "grass")
-        if math.random() < sand_grass/200 then
+        local sand_grass = spread(board.grid, self.x, self.y, "grass")
+        if math.random() < sand_grass/600 then
             table.insert(dirt_table, Dirt:Create(self.x, self.y))
+            result = true
+        end
+        return result
+    end
+
+    -- Sand to Lava
+    function Sand:Sand_to_Lava()
+        local result = false
+        local sand_lava = spread(board.grid, self.x, self.y, "lava")
+        if math.random() < sand_lava/600 then
+            table.insert(lava_table, Lava:Create(self.x, self.y))
             result = true
         end
         return result
@@ -500,7 +535,7 @@ function love.load()
     -- Grass to Tree
     function Grass:Grass_to_Tree()
         local result = false
-        grass_tree = spread(board.grid, self.x, self.y, "tree")
+        local grass_tree = spread(board.grid, self.x, self.y, "tree")
         if math.random() < grass_tree/2000 then
             table.insert(tree_table, Tree:Create(self.x, self.y))
             result = true
@@ -509,7 +544,7 @@ function love.load()
     end
 
     -- Grass to Dirt (Player Trample)
-    function Grass:Grass_to_Dirt()
+    function Grass:Grass_to_Dirt_via_Player()
         local result = false
         if self.x == player.x and self.y == player.y then
             table.insert(dirt_table, Dirt:Create(self.x, self.y))
@@ -519,11 +554,22 @@ function love.load()
     end
 
     -- Grass to Dirt (Next to Water)
-    function Grass:Grass_to_Dirt()
+    function Grass:Grass_to_Dirt_via_Water()
         local result = false
-        grass_water = spread(board.grid, self.x, self.y, "water")
+        local grass_water = spread(board.grid, self.x, self.y, "water")
         if math.random() < grass_water/100 then
             table.insert(dirt_table, Dirt:Create(self.x, self.y))
+            result = true
+        end
+        return result
+    end
+
+    -- Grass to Lava
+    function Grass:Grass_to_Lava()
+        local result = false
+        local grass_lava = spread(board.grid, self.x, self.y, "lava")
+        if math.random() < grass_lava/700 then
+            table.insert(lava_table, Lava:Create(self.x, self.y))
             result = true
         end
         return result
@@ -566,6 +612,17 @@ function love.load()
     -- Tree to Dirt
     function Tree:Tree_to_Dirt()
         table.insert(dirt_table, Dirt:Create(self.x, self.y))
+    end
+
+    -- Tree to Lava
+    function Tree:Tree_to_Lava()
+        local result = false
+        local tree_lava = spread(board.grid, self.x, self.y, "lava")
+        if math.random() < tree_lava/800 then
+            table.insert(lava_table, Lava:Create(self.x, self.y))
+            result = true
+        end
+        return result
     end
 
 --------------------------------------------------------------------------------
@@ -645,7 +702,7 @@ function love.load()
     -- Stone to Dirt
     function Stone:Stone_to_Dirt()
         local result = false
-        stone_water = spread(board.grid,self.x,self.y,"water")
+        local stone_water = spread(board.grid,self.x,self.y,"water")
         if math.random() < stone_water/80 then
             table.insert(dirt_table, Dirt:Create(self.x,self.y))
             result = true
@@ -682,40 +739,19 @@ function love.update(dt)
                 end
             end
 
-
-            -- Update Board
-            --[[
             for k,v in pairs(water_table) do
-                board.grid[v.y][v.x] = "water"
+                if v:Water_to_Stone() then
+                    table.remove(water_table, k)
+                end
             end
-            for k,v in pairs(dirt_table) do
-                board.grid[v.y][v.x] = "dirt"
-            end
-            for k,v in pairs(sand_table) do
-                board.grid[v.y][v.x] = "sand"
-            end
-            for k,v in pairs(grass_table) do
-                board.grid[v.y][v.x] = "grass"
-            end
-            for k,v in pairs(stone_table) do
-                board.grid[v.y][v.x] = "stone"
-            end
-            for k,v in pairs(lava_table) do
-                board.grid[v.y][v.x] = "lava"
-            end
-            for k,v in pairs(tree_table) do
-                board.grid[v.y][v.x] = "tree"
-            end
-            ]]--
-
-            -- Erode
-            --for k,v in pairs(water_table) do
-            --end
             for k,v in pairs(dirt_table) do
                 if v:Dirt_to_Sand() then
                     table.remove(dirt_table, k)
                 end
                 if v:Dirt_to_Grass() then
+                    table.remove(dirt_table, k)
+                end
+                if v:Dirt_to_Lava() then
                     table.remove(dirt_table, k)
                 end
             end
@@ -726,12 +762,21 @@ function love.update(dt)
                 if v:Sand_to_Dirt() then
                     table.remove(sand_table, k)
                 end
+                if v:Sand_to_Lava() then
+                    table.remove(sand_table, k)
+                end
             end
             for k,v in pairs(grass_table) do
                 if v:Grass_to_Tree() then
-                    --table.remove(grass_table, k)
+                    table.remove(grass_table, k)
                 end
-                if v:Grass_to_Dirt() then
+                if v:Grass_to_Dirt_via_Water() then
+                    table.remove(grass_table, k)
+                end
+                if v:Grass_to_Dirt_via_Player() then
+                    table.remove(grass_table, k)
+                end
+                if v:Grass_to_Lava() then
                     table.remove(grass_table, k)
                 end
             end
@@ -740,37 +785,16 @@ function love.update(dt)
                     table.remove(stone_table, k)
                 end
             end
+            for k,v in pairs(tree_table) do
+                if v:Tree_to_Lava() then
+                    table.remove(tree_table, k)
+                end
+            end
             for k,v in pairs(lava_table) do
                 if v:Lava_to_Dirt() then
                     table.remove(lava_table, k)
                 end
             end
-            --for k,v in pairs(tree_table) do
-            --end
-
-            -- Spread Lava
-            function Spread_Lava()
-                for y = 2, gridYCount - 1 do
-                    for x = 2, gridXCount -1 do
-                        if board.grid[y][x] ~= "stone" or board.grid[y][x] ~= "lava" then
-                            any_lava = spread(board.grid,x,y,"lava")
-                            if board.grid[y][x] == "water" then
-                                water_lava = spread(board.grid,x,y,"lava")
-                                if math.random() < any_lava/300 then
-                                    table.insert(lava_table, Lava:Create(x,y))
-                                end
-                            elseif math.random() < any_lava/300 then
-                                if math.random() < 0.1 then
-                                    table.insert(stone_table, Stone:Create(x,y))
-                                else
-                                    table.insert(lava_table, Lava:Create(x,y))
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            Spread_Lava()
 
             -- Add a Volcano
             if math.random() < 1/100 then
@@ -883,32 +907,28 @@ function love.update(dt)
             and player.y > 2
             and board.grid[player.y - 1][player.x] ~= "water"
             and board.grid[player.y - 1][player.x] ~= "lava"
-            and board.grid[player.y - 1][player.x] ~= "tree"
-            and (board.grid[player.y - 1][player.x] ~= "stone" or board.grid[player.y - 2][player.x] ~= "stone") then
+            and board.grid[player.y - 1][player.x] ~= "tree" then
                 player.y = player.y - 1
             end
             if love.keyboard.isDown( "down" )
             and player.y < gridYCount - 1
             and board.grid[player.y + 1][player.x] ~= "water"
             and board.grid[player.y + 1][player.x] ~= "lava"
-            and board.grid[player.y + 1][player.x] ~= "tree"
-            and (board.grid[player.y + 1][player.x] ~= "stone" or board.grid[player.y + 2][player.x] ~= "stone") then
+            and board.grid[player.y + 1][player.x] ~= "tree" then
                 player.y = player.y + 1
             end
             if love.keyboard.isDown( "left" )
             and player.x > 2
             and board.grid[player.y][player.x - 1] ~= "water"
             and board.grid[player.y][player.x - 1] ~= "lava"
-            and board.grid[player.y][player.x - 1] ~= "tree"
-            and (board.grid[player.y][player.x - 1] ~= "stone" or board.grid[player.y][player.x - 2] ~= "stone") then
+            and board.grid[player.y][player.x - 1] ~= "tree" then
                 player.x = player.x - 1
             end
             if love.keyboard.isDown( "right" )
             and player.x < gridXCount - 1
             and board.grid[player.y][player.x + 1] ~= "water"
             and board.grid[player.y][player.x + 1] ~= "lava"
-            and board.grid[player.y][player.x + 1] ~= "tree"
-            and (board.grid[player.y][player.x + 1] ~= "stone" or board.grid[player.y][player.x + 2] ~= "stone") then
+            and board.grid[player.y][player.x + 1] ~= "tree" then
                 player.x = player.x + 1
             end
         end
