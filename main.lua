@@ -328,21 +328,21 @@ function love.load()
                 self.y = self.y - 1
             end
             if direction == 2
-            and self.y > 2
+            and self.y < gridYCount then
             and board.grid[self.y + 1][self.x] ~= "water"
             and board.grid[self.y + 1][self.x] ~= "lava"
             and (board.grid[self.y + 1][self.x] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
                 self.y = self.y + 1
             end
             if direction == 3
-            and self.y > 2
+            and self.x > 2 then
             and board.grid[self.y][self.x - 1] ~= "water"
             and board.grid[self.y][self.x - 1] ~= "lava"
             and (board.grid[self.y][self.x - 1] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
                 self.x = self.x - 1
             end
             if direction == 4
-            and self.y > 2
+            and self.x < gridXCount then
             and board.grid[self.y - 1][self.x + 1] ~= "water"
             and board.grid[self.y - 1][self.x + 1] ~= "lava"
             and (board.grid[self.y - 1][self.x + 1] ~= "stone" or board.grid[self.y - 2][self.x] ~= "stone") then
